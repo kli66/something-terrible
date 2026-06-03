@@ -1,0 +1,6 @@
+type: brew
+nofile-limits: true
+brew-analytics: false
+auto-update: true
+update-interval: 7d
+update-wait-after-boot: 5m

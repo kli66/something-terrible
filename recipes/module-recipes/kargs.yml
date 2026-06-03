@@ -1,0 +1,5 @@
+type: kargs
+kargs:
+  # Enable btrfs compression with zstd (level 1 for balance of speed/compression)
+  # and disable access time updates for better I/O performance
+  - rootflags=compress=zstd:1,noatime

@@ -3,75 +3,16 @@
 name: something-terrible
 description: This is my personal OS image.
 
-base-image: ghcr.io/ublue-os/bluefin
-image-version: stable
+base-image: quay.io/fedora-ostree-desktops/kinoite
+image-version: 44
 
 modules:
-  - type: files
-    files:
-      - source: system
-        destination: /
-
-  - type: dnf
-    repos:
-      copr:
-        - scottames/ghostty
-    install:
-      packages:
-        - neovim
-        - ripgrep
-        - fd-find
-        - gcc
-        - gcc-c++
-        - make
-        - cmake
-        - pkgconf-pkg-config
-        - clang
-        - lld
-        - llvm
-        - clang-tools-extra
-        - fcitx5
-        - fcitx5-rime
-        - fcitx5-chinese-addons
-        - fcitx5-configtool
-        - fcitx5-gtk
-        - fcitx5-qt
-        - fcitx5-qt6
-        - librime-lua
-        - wdisplays
-        - ghostty
-        - google-noto-sans-cjk-fonts
-        - google-noto-serif-cjk-fonts
-        - google-noto-color-emoji-fonts
-        - jetbrains-mono-fonts
-        - fira-code-fonts
-        - cascadia-code-fonts
-        - adobe-source-han-sans-cn-fonts
-        - adobe-source-han-sans-tw-fonts
-        - adobe-source-han-serif-tw-fonts
-        - liberation-fonts-all
-
-  - type: script
-    no-cache: true
-    snippets:
-      - |
-        set -oue pipefail
-
-        dnf5 -y copr enable tofik/nwg-shell
-
-        dnf5 install -y --nogpgcheck --repofrompath 'terra-bootstrap,https://repos.fyralabs.com/terra$releasever' --repo terra-bootstrap terra-release
-        sed -i 's/^enabled=0/enabled=1/' /etc/yum.repos.d/terra*.repo
-        dnf5 install -y niri noctalia-shell nwg-look adw-gtk3-theme
-        sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/terra*.repo
-
-        CLASH_VERGE_URL="$(curl -fsSL https://api.github.com/repos/clash-verge-rev/clash-verge-rev/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+\.x86_64\.rpm)".*/\1/p' | head -n 1)"
-        test -n "${CLASH_VERGE_URL}" && test "${CLASH_VERGE_URL}" != "null"
-        dnf5 install -y "${CLASH_VERGE_URL}"
-
-        CC_SWITCH_URL="$(curl -fsSL https://api.github.com/repos/farion1231/cc-switch/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+Linux-x86_64\.rpm)".*/\1/p' | head -n 1)"
-        test -n "${CC_SWITCH_URL}" && test "${CC_SWITCH_URL}" != "null"
-        dnf5 install -y "${CC_SWITCH_URL}"
-
-        dnf5 clean all
-
+  - from-file: module-recipes/files.yml
+  - from-file: module-recipes/fonts.yml
+  - from-file: module-recipes/dnf.yml
+  - from-file: module-recipes/brew.yml
+  - from-file: module-recipes/flatpaks.yml
+  - from-file: module-recipes/kargs.yml
+  - from-file: module-recipes/systemd.yml
+  - from-file: module-recipes/scripts.yml
   - type: signing

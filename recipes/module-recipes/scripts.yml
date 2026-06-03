@@ -1,0 +1,28 @@
+modules:
+  - type: script
+    no-cache: true
+    snippets:
+      - |
+        set -oue pipefail
+
+        # Install Clash Verge Rev
+        echo "Fetching latest Clash Verge Rev release..."
+        CLASH_VERGE_URL="$(curl -fsSL https://api.github.com/repos/clash-verge-rev/clash-verge-rev/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+\.x86_64\.rpm)".*/\1/p' | head -n 1)"
+        test -n "${CLASH_VERGE_URL}" && test "${CLASH_VERGE_URL}" != "null"
+        echo "Installing from: ${CLASH_VERGE_URL}"
+        dnf5 install -y "${CLASH_VERGE_URL}"
+
+        # Install CC Switch
+        echo "Fetching latest CC Switch release..."
+        CC_SWITCH_URL="$(curl -fsSL https://api.github.com/repos/farion1231/cc-switch/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+Linux-x86_64\.rpm)".*/\1/p' | head -n 1)"
+        test -n "${CC_SWITCH_URL}" && test "${CC_SWITCH_URL}" != "null"
+        echo "Installing from: ${CC_SWITCH_URL}"
+        dnf5 install -y "${CC_SWITCH_URL}"
+
+        dnf5 -y copr enable tofik/nwg-shell
+        dnf5 install -y --nogpgcheck --repofrompath 'terra-bootstrap,https://repos.fyralabs.com/terra$releasever' --repo terra-bootstrap terra-release
+        sed -i 's/^enabled=0/enabled=1/' /etc/yum.repos.d/terra*.repo
+        dnf5 install -y noctalia-shell nwg-look adw-gtk3-theme
+        sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/terra*.repo
+
+        dnf5 clean all

@@ -1,0 +1,7 @@
+type: default-flatpaks
+notify: true
+system:
+  install:
+    - com.github.tchx84.Flatseal
+    - com.bitwarden.desktop
+    - dev.zed.Zed

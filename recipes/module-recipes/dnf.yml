@@ -1,0 +1,31 @@
+modules:
+  - type: dnf
+    repos:
+      nonfree: rpmfusion
+      copr:
+        - scottames/ghostty
+        - avengemedia/dms
+    group-install:
+      packages:
+        - multimedia
+        - development-tools
+    install:
+      packages:
+        - neovim
+        - ripgrep
+        - fd-find
+        - fcitx5
+        - fcitx5-rime
+        - fcitx5-chinese-addons
+        - fcitx5-configtool
+        - fcitx5-gtk
+        - fcitx5-qt
+        - fcitx5-qt6
+        - librime-lua
+        - wdisplays
+        - ghostty
+        - niri
+      exclude:
+        - alacritty
+        - waybar
+        - fuzzel

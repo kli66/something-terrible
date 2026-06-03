@@ -1,0 +1,7 @@
+type: systemd
+system:
+  masked:
+    # Mask systemd-remount-fs.service to prevent boot failures on Fedora Atomic 42+
+    # This service fails when trying to reconfigure composefs overlay mounts
+    # See: https://bugzilla.redhat.com/show_bug.cgi?id=2348934
+    - systemd-remount-fs.service

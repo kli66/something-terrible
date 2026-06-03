@@ -4,21 +4,15 @@ fonts:
     - JetBrainsMono
     - FiraCode
     - CascadiaCode
-    - Hack
-    - SourceCodePro
-    - Terminus
   google-fonts:
     - Roboto
     - Open Sans
-    - Noto Sans Simplified Chinese
-    - Noto Sans Traditional Chinese
-    - Noto Sans Japanese
-    - Noto Sans Korean
-    - Noto Serif Simplified Chinese
-    - Noto Serif Traditional Chinese
-    - Noto Serif Japanese
-    - Noto Serif Korean
+    - Noto Sans SC
+    - Noto Sans TC
+    - Noto Sans JP
+    - Noto Sans KR
+    - Noto Serif SC
+    - Noto Serif TC
+    - Noto Serif JP
+    - Noto Serif KR
     - Noto Color Emoji
-    - Liberation Sans
-    - Liberation Serif
-    - Liberation Mono

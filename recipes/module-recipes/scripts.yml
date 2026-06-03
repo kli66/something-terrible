@@ -19,7 +19,8 @@ modules:
         echo "Installing from: ${CC_SWITCH_URL}"
         dnf5 install -y "${CC_SWITCH_URL}"
 
-        dnf5 -y copr enable tofik/nwg-shell
+        # Enable terra repo and install packages
+        # Note: noctalia-shell, nwg-look, and adw-gtk3-theme all available from terra
         dnf5 install -y --nogpgcheck --repofrompath 'terra-bootstrap,https://repos.fyralabs.com/terra$releasever' --repo terra-bootstrap terra-release
         sed -i 's/^enabled=0/enabled=1/' /etc/yum.repos.d/terra*.repo
         dnf5 install -y noctalia-shell nwg-look adw-gtk3-theme

@@ -1,0 +1,5 @@
+type: chezmoi
+repository: "https://github.com/kli66/wm-dots.git"
+# Initialize manually after install:
+# chezmoi init --apply https://github.com/kli66/wm-dots.git
+all-users: false

@@ -11,6 +11,7 @@ modules:
   - from-file: module-recipes/fonts.yml
   - from-file: module-recipes/dnf.yml
   - from-file: module-recipes/brew.yml
+  - from-file: module-recipes/chezmoi.yml
   - from-file: module-recipes/flatpaks.yml
   - from-file: module-recipes/kargs.yml
   - from-file: module-recipes/systemd.yml

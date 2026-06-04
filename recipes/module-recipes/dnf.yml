@@ -27,20 +27,7 @@ modules:
         - niri
         - grim
         - slurp
-        - hyprpicker
-        - wl-clipboard
-        - tesseract
-        - tesseract-langpack-eng
-        - ImageMagick
-        - zbar
-        - curl
-        - translate-shell
-        - ffmpeg
-        - jq
-        - wl-screenrec
-        - python3
-        - python3-gobject
-        - xdg-desktop-portal
+        - swappy
       exclude:
         - alacritty
         - waybar

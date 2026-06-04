@@ -1,8 +1,0 @@
-type: default-flatpaks
-configurations:
-  - scope: system
-    notify: true
-    install:
-      - com.github.tchx84.Flatseal
-      - com.bitwarden.desktop
-      - dev.zed.Zed

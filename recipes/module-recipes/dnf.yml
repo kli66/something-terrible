@@ -28,6 +28,7 @@ modules:
         - grim
         - slurp
         - swappy
+        - qt6ct
       exclude:
         - alacritty
         - waybar

@@ -1,7 +1,6 @@
 type: systemd
 system:
   enabled:
-    - displaylink.service
     - clash-verge-service.service
   masked:
     # Mask systemd-remount-fs.service to prevent boot failures on Fedora Atomic 42+

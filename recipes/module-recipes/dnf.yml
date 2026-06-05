@@ -1,10 +1,13 @@
 modules:
   - type: dnf
     repos:
-      nonfree: rpmfusion
       copr:
         - scottames/ghostty
         - avengemedia/dms
+      files:
+        - https://negativo17.org/repos/fedora-multimedia.repo
+      keys:
+        - https://negativo17.org/repos/RPM-GPG-KEY-slaanesh
     group-install:
       packages:
         - multimedia
@@ -30,20 +33,8 @@ modules:
         - swappy
         - qt6ct
         - kernel-devel-matched
+        - displaylink
       exclude:
         - alacritty
         - waybar
         - fuzzel
-
-  - type: dnf
-    repos:
-      cleanup: true
-      files:
-        - https://negativo17.org/repos/fedora-multimedia.repo
-      keys:
-        - https://negativo17.org/repos/RPM-GPG-KEY-slaanesh
-    install:
-      packages:
-        - repo: fedora-multimedia
-          packages:
-            - displaylink

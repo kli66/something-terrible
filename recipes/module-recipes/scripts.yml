@@ -12,6 +12,29 @@ modules:
         echo "Installing from: ${CLASH_VERGE_URL}"
         dnf5 install -y "${CLASH_VERGE_URL}"
 
+        CLASH_VERGE_SERVICE_BIN="$(command -v clash-verge-service || true)"
+        if [[ -z "${CLASH_VERGE_SERVICE_BIN}" ]]; then
+          CLASH_VERGE_SERVICE_BIN="$(find /usr -type f -name clash-verge-service -print -quit)"
+        fi
+        test -n "${CLASH_VERGE_SERVICE_BIN}"
+        test -x "${CLASH_VERGE_SERVICE_BIN}"
+
+        install -Dm0644 /dev/stdin /etc/systemd/system/clash-verge-service.service <<EOF
+        [Unit]
+        Description=Clash Verge Service helps to launch Clash Core.
+        After=network-online.target nftables.service iptables.service
+
+        [Service]
+        Type=simple
+        ExecStart=${CLASH_VERGE_SERVICE_BIN}
+        Group=wheel
+        Restart=always
+        RestartSec=5
+
+        [Install]
+        WantedBy=multi-user.target
+        EOF
+
         # Install CC Switch
         echo "Fetching latest CC Switch release..."
         CC_SWITCH_URL="$(curl -fsSL https://api.github.com/repos/farion1231/cc-switch/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+Linux-x86_64\.rpm)".*/\1/p' | head -n 1)"

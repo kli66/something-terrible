@@ -12,6 +12,6 @@ modules:
   - from-file: module-recipes/dnf.yml
   - from-file: module-recipes/brew.yml
   - from-file: module-recipes/kargs.yml
-  - from-file: module-recipes/systemd.yml
   - from-file: module-recipes/scripts.yml
+  - from-file: module-recipes/systemd.yml
   - type: signing

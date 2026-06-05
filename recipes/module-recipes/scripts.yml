@@ -5,6 +5,18 @@ modules:
       - |
         set -oue pipefail
 
+        # Install DisplayLink after preparing the akmods build user expected by Fedora 44.
+        # akmod-evdi's %post can fail in image builds if it tries to build as root.
+        dnf5 install -y akmods kernel-devel-matched
+        systemd-sysusers /usr/lib/sysusers.d/akmods.conf || true
+        if ! getent passwd akmodsbuild >/dev/null; then
+          useradd -r -s /sbin/nologin -d /var/cache/akmods akmodsbuild
+        fi
+        dnf5 install -y displaylink || {
+          rpm -q displaylink akmod-evdi libevdi
+          echo "DisplayLink RPMs installed, but akmod-evdi %post failed during image build; akmods will build on the deployed host."
+        }
+
         # Install Clash Verge Rev
         echo "Fetching latest Clash Verge Rev release..."
         CLASH_VERGE_URL="$(curl -fsSL https://api.github.com/repos/clash-verge-rev/clash-verge-rev/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+\.x86_64\.rpm)".*/\1/p' | head -n 1)"

@@ -32,8 +32,6 @@ modules:
         - slurp
         - swappy
         - qt6ct
-        - kernel-devel-matched
-        - displaylink
       exclude:
         - alacritty
         - waybar

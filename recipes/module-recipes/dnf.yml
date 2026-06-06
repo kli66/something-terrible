@@ -25,6 +25,7 @@ modules:
         - wdisplays
         - ghostty
         - niri
+        - xwayland-satellite
         - grim
         - slurp
         - swappy

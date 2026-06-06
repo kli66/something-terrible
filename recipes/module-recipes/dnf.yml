@@ -28,6 +28,7 @@ modules:
         - grim
         - slurp
         - swappy
+        - xdg-desktop-portal-kde
         - qt6ct
       exclude:
         - alacritty

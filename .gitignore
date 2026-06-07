@@ -1,4 +1,4 @@
 cosign.key
 cosign.private
 /Containerfile
-gidro-os/
+/.bluebuild-scripts_*

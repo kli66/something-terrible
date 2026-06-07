@@ -6,6 +6,7 @@ fonts:
     - CascadiaCode
   google-fonts:
     - Roboto
+    - Inter
     - Open Sans
     - Noto Sans SC
     - Noto Sans TC

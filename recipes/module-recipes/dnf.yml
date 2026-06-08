@@ -25,11 +25,7 @@ modules:
         - wdisplays
         - ghostty
         - niri
-        - repo: copr:copr.fedorainfracloud.org:avengemedia:dms
-          packages:
-            - dms
-          exclude:
-            - cava
+        - dms
         - xwayland-satellite
         - grim
         - slurp
@@ -40,3 +36,4 @@ modules:
         - alacritty
         - waybar
         - fuzzel
+        - cava

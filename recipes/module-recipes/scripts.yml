@@ -30,10 +30,10 @@ modules:
         rm -f "${BITWARDEN_RPM}"
 
         # Enable terra repo and install packages
-        # Note: noctalia-shell, nwg-look, adw-gtk3-theme, and zed all available from terra
+        # Note: nwg-look, adw-gtk3-theme, and zed all available from terra
         dnf5 install -y --nogpgcheck --repofrompath 'terra-bootstrap,https://repos.fyralabs.com/terra$releasever' --repo terra-bootstrap terra-release
         sed -i 's/^enabled=0/enabled=1/' /etc/yum.repos.d/terra*.repo
-        dnf5 install -y noctalia-shell nwg-look adw-gtk3-theme zed
+        dnf5 install -y nwg-look adw-gtk3-theme zed
         sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/terra*.repo
 
         dnf5 clean all

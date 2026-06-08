@@ -5,25 +5,13 @@ modules:
       - |
         set -oue pipefail
 
-        # Install Clash Verge Rev
-        echo "Fetching latest Clash Verge Rev release..."
-        CLASH_VERGE_URL="$(curl -fsSL https://api.github.com/repos/clash-verge-rev/clash-verge-rev/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+\.x86_64\.rpm)".*/\1/p' | head -n 1)"
-        test -n "${CLASH_VERGE_URL}" && test "${CLASH_VERGE_URL}" != "null"
-        echo "Installing from: ${CLASH_VERGE_URL}"
-        dnf5 install -y "${CLASH_VERGE_URL}"
-
-        echo "Installing Clash Verge Rev service unit..."
-        CLASH_VERGE_SERVICE_TEMPLATE_URL="https://raw.githubusercontent.com/clash-verge-rev/clash-verge-service-ipc/main/resources/systemd_service_unit.tmpl"
-        CLASH_VERGE_SERVICE_EXEC_START=/usr/bin/clash-verge-service
-        CLASH_VERGE_SERVICE_GROUP=1000
-        CLASH_VERGE_SERVICE_UNIT=/usr/lib/systemd/system/clash-verge-service.service
-        curl -fsSL "${CLASH_VERGE_SERVICE_TEMPLATE_URL}" \
-          | sed \
-              -e "s|{exec_start}|${CLASH_VERGE_SERVICE_EXEC_START}|g" \
-              -e "s|{group}|${CLASH_VERGE_SERVICE_GROUP}|g" \
-          > "${CLASH_VERGE_SERVICE_UNIT}"
-        grep -Fq "ExecStart=/usr/bin/clash-verge-service" "${CLASH_VERGE_SERVICE_UNIT}"
-        grep -Fq "Group=1000" "${CLASH_VERGE_SERVICE_UNIT}"
+        # Install Bettbox
+        echo "Fetching latest Bettbox release..."
+        BETTBOX_URL="$(curl -fsSL https://api.github.com/repos/appshubcc/Bettbox/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+Bettbox-[^"]+-linux-amd64\.rpm)".*/\1/p' | head -n 1)"
+        test -n "${BETTBOX_URL}" && test "${BETTBOX_URL}" != "null"
+        echo "Installing from: ${BETTBOX_URL}"
+        dnf5 install -y "${BETTBOX_URL}"
+        chmod u+s /usr/share/Bettbox/BettboxCore
 
         # Install CC Switch
         echo "Fetching latest CC Switch release..."

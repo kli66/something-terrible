@@ -1,5 +1,9 @@
 type: systemd
 system:
+  enabled:
+    - greetd.service
+  disabled:
+    - plasmalogin.service
   masked:
     # Mask systemd-remount-fs.service to prevent boot failures on Fedora Atomic 42+
     # This service fails when trying to reconfigure composefs overlay mounts

@@ -31,6 +31,9 @@ modules:
         - swappy
         - xdg-desktop-portal-kde
         - qt6ct
+        - greetd
+        - greetd-selinux
+        - tuigreet
       exclude:
         - alacritty
         - waybar

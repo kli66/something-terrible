@@ -12,6 +12,8 @@ modules:
     install:
       packages:
         - neovim
+        - emacs-pgtk
+        - emacsclient
         - ripgrep
         - fd-find
         - fcitx5

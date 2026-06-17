@@ -36,4 +36,11 @@ modules:
         dnf5 install -y noctalia-shell nwg-look adw-gtk3-theme zed
         sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/terra*.repo
 
+        # Install Chipmunk
+        echo "Fetching latest Chipmunk release..."
+        CHIPMUNK_URL="$(curl -fsSL https://api.github.com/repos/esrlabs/chipmunk/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+chipmunk%40[^"]+-linux-x86_64\.rpm)".*/\1/p' | head -n 1)"
+        test -n "${CHIPMUNK_URL}" && test "${CHIPMUNK_URL}" != "null"
+        echo "Installing from: ${CHIPMUNK_URL}"
+        dnf5 install -y "${CHIPMUNK_URL}"
+
         dnf5 clean all

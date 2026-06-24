@@ -17,6 +17,8 @@ modules:
         - clang-tools-extra
         - ripgrep
         - fd-find
+        - distrobox
+        - podman-docker
         - fcitx5
         - fcitx5-rime
         - fcitx5-chinese-addons

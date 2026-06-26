@@ -19,6 +19,7 @@ modules:
         - fd-find
         - distrobox
         - podman-docker
+        - podman-compose
         - fcitx5
         - fcitx5-rime
         - fcitx5-chinese-addons

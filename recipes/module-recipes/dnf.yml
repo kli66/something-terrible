@@ -56,6 +56,11 @@ modules:
         - quickshell-git
         - danksearch
         - dankcalendar-git
+        # Btrfs snapshots of /var/home. Config + first-boot subvolume init are
+        # shipped via files.yml; timers enabled in systemd.yml.
+        # (btrfs-assistant is the GUI front-end.)
+        - snapper
+        - btrfs-assistant
       exclude:
         - alacritty
         - waybar

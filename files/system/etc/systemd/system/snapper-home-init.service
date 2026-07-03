@@ -1,0 +1,16 @@
+[Unit]
+Description=Create snapper .snapshots subvolume for /var/home (first boot)
+Documentation=man:snapper(8)
+# Runs once: self-skips on every subsequent boot after the subvolume exists.
+ConditionPathExists=!/var/home/.snapshots
+# /var/home must be mounted first; run before the snapshot timers act on it.
+After=local-fs.target
+Before=snapper-timeline.timer snapper-cleanup.timer
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/bash /usr/libexec/snapper-home-init.sh
+
+[Install]
+WantedBy=multi-user.target

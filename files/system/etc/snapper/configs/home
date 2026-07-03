@@ -1,0 +1,64 @@
+# snapper configuration for the /var/home subvolume.
+#
+# Shipped declaratively into the image via files.yml
+# (files/system/etc/snapper/configs/home -> /etc/snapper/configs/home).
+#
+# The matching .snapshots subvolume is NOT baked here: it is created on first
+# boot by snapper-home-init.service, because /var/home is the user data
+# partition and does not exist at image-build time.
+#
+# Fedora's snapper (0.13) ships no default template and no SNAPPER_CONFIGS
+# registry file; /usr/libexec/snapper/systemd-helper auto-discovers every
+# config present in /etc/snapper/configs/, so this complete file is all the
+# timers need.
+
+# subvolume to snapshot
+SUBVOLUME="/var/home"
+
+# filesystem type
+FSTYPE="btrfs"
+
+# btrfs qgroup for space-aware cleanup algorithms (unset = disabled)
+QGROUP=""
+
+# prune snapshots if they would exceed this fraction of the filesystem ...
+SPACE_LIMIT="0.3"
+# ... or if free space would drop below this fraction
+FREE_LIMIT="0.2"
+
+# users/groups allowed to operate on this config (and browse .snapshots)
+# without root
+ALLOW_USERS="kai"
+ALLOW_GROUPS=""
+
+# propagate the ALLOW_* ACLs onto the .snapshots directory
+SYNC_ACL="yes"
+
+# compare pre/post snapshots in the background after creation
+BACKGROUND_COMPARISON="yes"
+
+# number cleanup is for pre/post pairs (package transactions); unused here,
+# this config only takes timeline snapshots
+NUMBER_CLEANUP="no"
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="10"
+
+# --- timeline (periodic) snapshots ---------------------------------------
+# snapper-timeline.timer fires hourly. Home carries churny cache, so we keep
+# NO intra-day (hourly) snapshots to bound space, and retain daily granularity
+# for a week + weekly for a month. That covers the real threat model here:
+# an app or version bump wiping config (e.g. the Zen spaces reset), or a stray
+# rm -- none of which need sub-day resolution.
+TIMELINE_CREATE="yes"
+TIMELINE_CLEANUP="yes"
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="0"
+TIMELINE_LIMIT_DAILY="7"
+TIMELINE_LIMIT_WEEKLY="4"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# clean up empty pre/post snapshot pairs
+EMPTY_PRE_POST_CLEANUP="yes"
+EMPTY_PRE_POST_MIN_AGE="1800"

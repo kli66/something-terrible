@@ -30,10 +30,15 @@ modules:
         rm -f "${BITWARDEN_RPM}"
 
         # Enable terra repo and install packages
-        # Note: noctalia-shell, nwg-look, adw-gtk3-theme, and zed all available from terra
+        # Only nwg-look and zed still need terra (neither is in Fedora or the DMS COPRs).
+        # adw-gtk3-theme moved to dnf.yml (it's in Fedora 44 proper).
+        # noctalia-shell was dropped here — the shell is now DankMaterialShell (DMS),
+        # installed from the avengemedia/dms COPR in dnf.yml on upstream quickshell 0.3.0.
+        # Do NOT reintroduce noctalia-shell: it hard-requires noctalia-qs, whose bundled
+        # quickshell fork conflicts with upstream quickshell and lacks the pipewire crash fix.
         dnf5 install -y --nogpgcheck --repofrompath 'terra-bootstrap,https://repos.fyralabs.com/terra$releasever' --repo terra-bootstrap terra-release
         sed -i 's/^enabled=0/enabled=1/' /etc/yum.repos.d/terra*.repo
-        dnf5 install -y noctalia-shell nwg-look adw-gtk3-theme zed
+        dnf5 install -y nwg-look zed
         sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/terra*.repo
 
         # Install Chipmunk

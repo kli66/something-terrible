@@ -37,9 +37,22 @@ modules:
         - swappy
         - xdg-desktop-portal-kde
         - qt6ct
+        - adw-gtk3-theme
         - greetd
         - greetd-selinux
         - tuigreet
+        # DankMaterialShell (DMS) shell + greeter, from the avengemedia/dms COPR.
+        # quickshell here is UPSTREAM 0.3.0 (carries the 2026-04-06 pipewire fix),
+        # NOT noctalia's noctalia-qs fork — the noctalia-shell install was dropped
+        # from scripts.yml so nothing pulls noctalia-qs (which also Provides quickshell
+        # and would conflict). This dnf module runs before scripts.yml, so 0.3.0 is
+        # already installed when the terra block runs.
+        - dms
+        - dms-cli
+        - dms-greeter
+        - quickshell
+        - danksearch
+        - dankcalendar-git
       exclude:
         - alacritty
         - waybar

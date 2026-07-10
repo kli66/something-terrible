@@ -41,16 +41,19 @@ modules:
         - greetd
         - greetd-selinux
         - tuigreet
-        # DankMaterialShell (DMS) shell + greeter, from the avengemedia/dms COPR.
-        # quickshell here is UPSTREAM 0.3.0 (carries the 2026-04-06 pipewire fix),
-        # NOT noctalia's noctalia-qs fork — the noctalia-shell install was dropped
-        # from scripts.yml so nothing pulls noctalia-qs (which also Provides quickshell
-        # and would conflict). This dnf module runs before scripts.yml, so 0.3.0 is
-        # already installed when the terra block runs.
+        # DankMaterialShell (DMS) shell + greeter. Only `dms` lives in the
+        # avengemedia/dms COPR; the rest (quickshell-git, dms-greeter, danksearch,
+        # dankcalendar-git) come from avengemedia/danklinux, enabled transitively
+        # as a coprdep of dms.
+        # Use quickshell-git, NOT plain quickshell 0.3.0: danklinux's quickshell-git
+        # (0.3.1^git) Provides+Conflicts quickshell, and `dms` now requires the -git
+        # build, so pinning 0.3.0 makes the two collide at install time. 0.3.1^git is
+        # newer than 0.3.0 and still carries the 2026-04-06 pipewire fix.
+        # Still NOT noctalia's noctalia-qs fork — noctalia-shell stays out of
+        # scripts.yml so nothing pulls noctalia-qs (which also Provides quickshell).
         - dms
-        - dms-cli
         - dms-greeter
-        - quickshell
+        - quickshell-git
         - danksearch
         - dankcalendar-git
       exclude:

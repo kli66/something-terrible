@@ -3,3 +3,11 @@ kargs:
   # Enable btrfs compression with zstd (level 1 for balance of speed/compression)
   # and disable access time updates for better I/O performance
   - rootflags=compress=zstd:1,noatime
+  # Disable AMD amdgpu Panel Self Refresh (PSR v1 + PSR-SU) — works around a DMUB firmware
+  # command timeout in the PSR enable path that freezes suspend/resume on this hardware
+  # (Lenovo 21J3CTO1WW, Phoenix APU), confirmed via kernel stack trace at dmub_psr.c:223.
+  # 0x10 = DC_DISABLE_PSR in DC_DEBUG_MASK (drivers/gpu/drm/amd/include/amd_shared.h,
+  # verified at kernel tag v7.1, matching kernel-7.1.3-200.fc44). This bitmask is NOT
+  # ABI-stable across kernel versions — re-verify against amd_shared.h before assuming it
+  # still means the same thing after a kernel bump. Full diagnosis: docs/hardware-notes.md.
+  - amdgpu.dcdebugmask=0x10

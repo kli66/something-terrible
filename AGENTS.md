@@ -28,7 +28,7 @@ Each `recipes/module-recipes/*.yml` is one BlueBuild module:
 - **`files.yml`** — copies `files/system/` onto the image root (`/`). So `files/system/etc/greetd/config.toml` lands at `/etc/greetd/config.toml`. Add baked-in config here.
 - **`systemd.yml`** — declares `enabled`/`disabled`/`masked` units (e.g. enables `greetd`, disables `plasmalogin`, masks `systemd-remount-fs` to avoid a known Atomic 42+ boot failure).
 - **`fonts.yml`** — nerd-fonts + google-fonts (heavy CJK Noto coverage).
-- **`kargs.yml`** — kernel arguments (btrfs zstd compression, `noatime`).
+- **`kargs.yml`** — kernel arguments (btrfs zstd compression, `noatime`; amdgpu PSR/DMUB suspend-freeze workaround). Before adding or changing a karg, check `docs/hardware-notes.md` — it has target-hardware diagnostics and general rpm-ostree kargs persistence/stability caveats.
 - **`brew.yml`** — enables Homebrew on the image.
 
 `files/scripts/example.sh` is upstream template boilerplate, not wired into the build.
@@ -36,6 +36,7 @@ Each `recipes/module-recipes/*.yml` is one BlueBuild module:
 ## Conventions
 
 - **Add a package the right layer:** in a repo → `dnf.yml` `install`; needs a third-party repo/RPM URL → a snippet in `scripts.yml`; a config file → `files/system/...` via `files.yml`; a service toggle → `systemd.yml`.
+- When asked to add a package while running from a Fedora Linux system, first verify local Fedora repository availability with `dnf5 search <package>` or `dnf5 repoquery --info <package> --cacheonly` before deciding whether it belongs in `dnf.yml` or `scripts.yml`.
 - **In `scripts.yml`**, always: assert the resolved URL is non-empty (`test -n … && test … != "null"`), install with `dnf5`, clean up temp files, and leave any temporarily-enabled repo disabled. End the module with `dnf5 clean all`.
 - **The image is the README's identity** — `README.md` is still largely the upstream BlueBuild template; don't treat it as authoritative about this specific image.
 - Comments in the YAML explain *why* (workarounds, bug links). Preserve them when editing nearby lines.

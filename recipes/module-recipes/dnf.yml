@@ -35,6 +35,8 @@ modules:
         - grim
         - slurp
         - swappy
+        - ImageMagick
+        - img2pdf
         - xdg-desktop-portal-kde
         - qt6ct
         - adw-gtk3-theme

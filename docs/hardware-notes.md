@@ -52,6 +52,42 @@ re-derive from scratch.
   time (see the "not ABI-stable" caveat below) — the `0x10` value above was verified against
   the tag matching kernel `7.1.3`, not guaranteed for a later kernel bump.
 
+## Bluetooth headset disconnect → shell crash (why the shell is DMS, not noctalia)
+
+**Status: resolved by switching the shell to DankMaterialShell (DMS) on upstream
+quickshell-git; merged to `main` 2026-07-16.** Kept here because it's stack-level
+diagnostic knowledge a future agent would otherwise re-derive from coredumps.
+
+- **Symptom:** the desktop shell crashed reproducibly on *abnormal* Bluetooth headset
+  disconnect — e.g. plugging a still-connected headset in to charge without disconnecting
+  BT first. 5 coredumps in one week, identical signature every time.
+- **Crash signature** (same function offsets across all dumps):
+  `QObject::disconnect(...)` (blanket 4-arg disconnect on a dead node)
+  ← `qs::service::pipewire::PwDefaultTracker::setDefaultConfiguredSink(PwNode*)`
+  ← `qs::service::pipewire::PwConnection::onFatalError()` → SIGSEGV.
+- **Trigger chain (journal):** headset link drops abnormally
+  (`bluetoothd: ext_io_disconnected ... Transport endpoint is not connected (107)`) →
+  PipeWire node `bluez_output.*` goes `running -> error` → quickshell treats it as a fatal
+  connection error → `onFatalError()` resets the default sink → blanket `QObject::disconnect`
+  on a node whose destroy-handler was already torn down.
+- **Root cause = quickshell version, not noctalia config.** The old shell ran on
+  **noctalia-qs** — a quickshell *fork* frozen on a ~Jan–Mar 2026 snapshot (rev `fb0cc155`,
+  RPM version `0.0.12`, which is noctalia's own counter, not a quickshell version). It carried
+  the 2026-01-08 reconnect patch that *introduced* the bug but not the fix. Upstream fix =
+  quickshell commit `13fe9b0` (2026-04-06, *"services/pipewire: avoid blanket disconnect for
+  default nodes"*), shipped in quickshell ≥ 0.3.0 (tagged 2026-05-04).
+- **Why not just run noctalia on fixed quickshell:** noctalia forked quickshell specifically
+  to add `Quickshell.Niri` (+ `Quickshell.DWL`) modules that upstream ships in *no* release;
+  `noctalia-shell` imports `Quickshell.Niri` to read niri workspaces and hard-requires
+  `noctalia-qs`, so it won't start on stock quickshell. DMS instead talks to niri over its IPC
+  socket directly, so it runs on upstream `quickshell-git`. Hence: switch shells, don't swap
+  the binary. (This is also why `noctalia-shell`/`noctalia-qs` must never be reintroduced —
+  they Provide+Conflict `quickshell` and would break the DMS install; the recipe files and
+  `tests/check-dms-install.sh` guard against it.)
+- **Verify after any quickshell bump:** `quickshell --version` reports upstream ≥ 0.3.0 (not
+  the noctalia-qs `fb0cc155` fingerprint), and `coredumpctl list | grep -E 'quickshell|qs'`
+  stays clean after a BT-disconnect repro.
+
 ## rpm-ostree kargs — persistence & stability caveats
 
 General knowledge for anyone touching kernel arguments in this repo (`kargs.yml`) or

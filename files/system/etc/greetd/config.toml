@@ -1,6 +1,14 @@
 [terminal]
 vt = 1
 
+# DankMaterialShell greeter (Quickshell/Wayland), launching niri under the hood.
+# The dms-greeter RPM (avengemedia/dms COPR) creates the "greeter" system user (UID 767)
+# and installs the PAM assets. Run `dms greeter sync` post-install to match the DMS theme.
+# NOTE: this is a compositor-backed greeter, unlike the previous pure-TTY tuigreet.
+# It runs on niri (which survives the dock's bad-EDID hotplug that crashed the KWin/
+# plasmalogin greeter), but smoke-test a cold boot WITH the dock attached before trusting it.
+# Revert path (also restore user = "greetd"):
+#   command = "tuigreet --time --remember --remember-user-session --asterisks"
 [default_session]
-command = "tuigreet --time --remember --remember-user-session --asterisks"
-user = "greetd"
+command = "dms-greeter --command niri"
+user = "greeter"

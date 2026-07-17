@@ -6,9 +6,12 @@ script="recipes/module-recipes/scripts.yml"
 greetd="files/system/etc/greetd/config.toml"
 systemd_recipe="recipes/module-recipes/systemd.yml"
 
-# --- DankMaterialShell packages present in dnf.yml (from avengemedia/dms COPR) ---
+# --- DankMaterialShell packages present in dnf.yml (from avengemedia/dms COPR +
+#     danklinux coprdep). `dms` ships the `dms` CLI itself (no separate dms-cli), and
+#     quickshell-git — not plain quickshell 0.3.0 — is required (they Provide+Conflict
+#     quickshell and `dms` needs the -git build; see the note in dnf.yml). ---
 grep -Fq "avengemedia/dms" "${dnf_recipe}"
-for pkg in dms dms-cli dms-greeter quickshell danksearch dankcalendar-git; do
+for pkg in dms dms-greeter quickshell-git danksearch dankcalendar-git; do
   grep -Eq "^[[:space:]]*-[[:space:]]+${pkg}\$" "${dnf_recipe}" || {
     echo "dnf.yml missing DMS package: ${pkg}" >&2
     exit 1

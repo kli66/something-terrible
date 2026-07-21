@@ -1,13 +1,14 @@
-# agentsview — web UI for browsing Claude Code agent sessions
+# agentsview — web UI for browsing AI coding agent sessions
 #
 # This rootless user service runs agentsview (https://github.com/kenn-io/agentsview),
-# a web-based viewer for Claude Code project sessions and conversation history.
+# a web-based viewer for AI coding agent sessions across 20+ supported tools.
 # The UI is accessible at http://127.0.0.1:8080
 #
 # SETUP:
 #
-# agentsview auto-discovers sessions from ~/.claude/projects (mounted read-only).
-# Data (SQLite database) persists in the agentsview-data named volume.
+# agentsview auto-discovers sessions from all mounted agent directories (read-only).
+# Only directories that exist on your system will be discovered — missing paths are
+# silently ignored. Data (SQLite database) persists in the agentsview-data named volume.
 #
 # Start the service:
 #
@@ -21,7 +22,7 @@
 # to avoid permission issues.
 
 [Unit]
-Description=agentsview web UI for Claude Code sessions
+Description=agentsview web UI for AI coding agent sessions
 Documentation=https://github.com/kenn-io/agentsview
 After=network-online.target
 Wants=network-online.target
@@ -30,9 +31,75 @@ Wants=network-online.target
 Image=ghcr.io/kenn-io/agentsview:latest
 ContainerName=agentsview
 PublishPort=127.0.0.1:8080:8080
-Volume=%h/.claude/projects:/agents/claude:ro,Z
+
+# Data persistence
 Volume=agentsview-data:/data
+
+# Agent session directories (Linux paths, read-only)
+# Only existing directories will be discovered; missing paths are ignored
+Volume=%h/.claude/projects:/agents/claude:ro,Z
+Volume=%h/.codex/sessions:/agents/codex:ro,Z
+Volume=%h/.local/share/devin:/agents/devin:ro,Z
+Volume=%h/.forge:/agents/forge:ro,Z
+Volume=%h/.local/share/amp/threads:/agents/amp:ro,Z
+Volume=%h/.gemini/antigravity:/agents/antigravity:ro,Z
+Volume=%h/.gemini/antigravity-cli:/agents/antigravity-cli:ro,Z
+Volume=%h/.openclaude/projects:/agents/openclaude:ro,Z
+Volume=%h/.copilot:/agents/copilot:ro,Z
+Volume=%h/.snowflake/cortex/conversations:/agents/cortex:ro,Z
+Volume=%h/.cursor/projects:/agents/cursor:ro,Z
+Volume=%h/.cursor/ai-tracking:/agents/cursor-attribution:ro,Z
+Volume=%h/.codewhale/sessions:/agents/codewhale:ro,Z
+Volume=%h/.deepseek/sessions:/agents/deepseek:ro,Z
+Volume=%h/.gemini:/agents/gemini:ro,Z
+Volume=%h/.local/share/gptme/logs:/agents/gptme:ro,Z
+Volume=%h/.grok/sessions:/agents/grok:ro,Z
+Volume=%h/.hermes/sessions:/agents/hermes:ro,Z
+Volume=%h/.iflow/projects:/agents/iflow:ro,Z
+Volume=%h/.local/share/kilo:/agents/kilo:ro,Z
+Volume=%h/.kimi/sessions:/agents/kimi:ro,Z
+Volume=%h/.kiro/sessions/cli:/agents/kiro-cli:ro,Z
+Volume=%h/.local/share/kiro-cli:/agents/kiro-cli-alt:ro,Z
+Volume=%h/.local/share/mimocode:/agents/mimocode:ro,Z
+Volume=%h/.vibe/logs/session:/agents/vibe:ro,Z
+Volume=%h/.openclaw/agents:/agents/openclaw:ro,Z
+Volume=%h/.local/share/opencode:/agents/opencode:ro,Z
+Volume=%h/.openhands/conversations:/agents/openhands:ro,Z
+Volume=%h/.omp/agent/sessions:/agents/omp:ro,Z
+Volume=%h/.pi/agent/sessions:/agents/pi:ro,Z
+Volume=%h/.local/share/piebald:/agents/piebald:ro,Z
+Volume=%h/.posit/assistant/workspaces:/agents/posit:ro,Z
+Volume=%h/.qclaw/agents:/agents/qclaw:ro,Z
+Volume=%h/.qoder/projects:/agents/qoder:ro,Z
+Volume=%h/.qoderwork/projects:/agents/qoderwork:ro,Z
+Volume=%h/.qwen/projects:/agents/qwen:ro,Z
+Volume=%h/.copaw/workspaces:/agents/copaw:ro,Z
+Volume=%h/.qwenpaw/workspaces:/agents/qwenpaw:ro,Z
+Volume=%h/.reasonix:/agents/reasonix:ro,Z
+Volume=%h/.config/Code/User/globalStorage/rooveterinaryinc.roo-cline:/agents/roocode:ro,Z
+Volume=%h/.cache/VSGitHubCopilotLogs/traces:/agents/vs-copilot:ro,Z
+Volume=%h/.config/Windsurf/User:/agents/windsurf:ro,Z
+Volume=%h/.warp:/agents/warp:ro,Z
+Volume=%h/.workbuddy/projects:/agents/workbuddy:ro,Z
+Volume=%h/.zcode/cli/db:/agents/zcode-db:ro,Z
+Volume=%h/.zcode/cli:/agents/zcode:ro,Z
+Volume=%h/.zencoder/sessions:/agents/zencoder:ro,Z
+
+# Environment variables for primary integrations
 Environment=CLAUDE_PROJECTS_DIR=/agents/claude
+Environment=CODEX_SESSIONS_DIR=/agents/codex
+Environment=DEVIN_DIR=/agents/devin
+Environment=FORGE_DIR=/agents/forge
+Environment=COPILOT_DIR=/agents/copilot
+Environment=GROK_DIR=/agents/grok
+Environment=AGENTSVIEW_CURSOR_ATTRIBUTION_DB=/agents/cursor-attribution/ai-code-tracking.db
+
+[Service]
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=default.target
 
 [Service]
 Restart=on-failure

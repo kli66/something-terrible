@@ -5,10 +5,10 @@ script="recipes/module-recipes/scripts.yml"
 systemd_recipe="recipes/module-recipes/systemd.yml"
 recipe="recipes/recipe.yml"
 
-grep -Fq "# Install Bettbox" "${script}"
-grep -Fq "https://api.github.com/repos/appshubcc/Bettbox/releases/latest" "${script}"
+grep -Fq "# Install Bettbox (pinned" "${script}"
+grep -Fq "https://github.com/appshubcc/Bettbox/releases/download/" "${script}"
 grep -Fq "BETTBOX_URL=" "${script}"
-grep -Fq "Bettbox-[^\"]+-linux-amd64\\.rpm" "${script}"
+grep -Fq "Bettbox-1.18.6-linux-amd64.rpm" "${script}"
 grep -Fq "dnf5 install -y \"\${BETTBOX_URL}\"" "${script}"
 grep -Fq "chmod u+s /usr/share/Bettbox/BettboxCore" "${script}"
 

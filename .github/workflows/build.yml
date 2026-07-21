@@ -36,3 +36,9 @@ jobs:
 
           # enabled by default, disable if your image is small and you want faster builds
           maximize_build_space: true
+
+          # Rechunk with hhd-dev/rechunk to preserve stable layer boundaries across builds.
+          # Clamps timestamps → identical content yields identical digest → minimal re-pull
+          # on trivial changes. Reuses prior layer plan from previous image manifest.
+          # Cost: ~2-4 min extra build time, requires sudo in CI, slightly larger total size.
+          rechunk: true

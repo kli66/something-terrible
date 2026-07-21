@@ -1,29 +1,28 @@
 modules:
   - type: script
-    no-cache: true
     snippets:
       - |
         set -oue pipefail
 
-        # Install Bettbox
-        echo "Fetching latest Bettbox release..."
-        BETTBOX_URL="$(curl -fsSL https://api.github.com/repos/appshubcc/Bettbox/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+Bettbox-[^"]+-linux-amd64\.rpm)".*/\1/p' | head -n 1)"
-        test -n "${BETTBOX_URL}" && test "${BETTBOX_URL}" != "null"
-        echo "Installing from: ${BETTBOX_URL}"
+        # Install Bettbox (pinned v1.18.6, 2026-07-21)
+        # To update: browse https://github.com/appshubcc/Bettbox/releases, copy new RPM URL
+        BETTBOX_URL="https://github.com/appshubcc/Bettbox/releases/download/v1.18.6/Bettbox-1.18.6-linux-amd64.rpm"
+        echo "Installing Bettbox from: ${BETTBOX_URL}"
         dnf5 install -y "${BETTBOX_URL}"
         chmod u+s /usr/share/Bettbox/BettboxCore
 
-        # Install CC Switch
-        echo "Fetching latest CC Switch release..."
-        CC_SWITCH_URL="$(curl -fsSL https://api.github.com/repos/farion1231/cc-switch/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+Linux-x86_64\.rpm)".*/\1/p' | head -n 1)"
-        test -n "${CC_SWITCH_URL}" && test "${CC_SWITCH_URL}" != "null"
-        echo "Installing from: ${CC_SWITCH_URL}"
+        # Install CC Switch (pinned v3.17.0, 2026-07-13)
+        # To update: browse https://github.com/farion1231/cc-switch/releases, copy new RPM URL
+        CC_SWITCH_URL="https://github.com/farion1231/cc-switch/releases/download/v3.17.0/CC-Switch-v3.17.0-Linux-x86_64.rpm"
+        echo "Installing CC Switch from: ${CC_SWITCH_URL}"
         dnf5 install -y "${CC_SWITCH_URL}"
 
-        # Install Bitwarden Desktop
-        echo "Fetching latest Bitwarden Desktop RPM..."
+        # Install Bitwarden Desktop (vendor redirects to latest; pin optional)
+        # Bitwarden's download endpoint redirects to the current stable RPM.
+        # Layer only changes when Bitwarden ships a new release.
         BITWARDEN_URL="https://bitwarden.com/download/?app=desktop&platform=linux&variant=rpm"
         BITWARDEN_RPM="/tmp/bitwarden-desktop.rpm"
+        echo "Installing Bitwarden Desktop from: ${BITWARDEN_URL}"
         curl -fL "${BITWARDEN_URL}" -o "${BITWARDEN_RPM}"
         test -s "${BITWARDEN_RPM}"
         dnf5 install -y "${BITWARDEN_RPM}"
@@ -41,11 +40,10 @@ modules:
         dnf5 install -y nwg-look zed
         sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/terra*.repo
 
-        # Install Chipmunk
-        echo "Fetching latest Chipmunk release..."
-        CHIPMUNK_URL="$(curl -fsSL https://api.github.com/repos/esrlabs/chipmunk/releases/latest | sed -nE 's/.*"browser_download_url": "([^"]+chipmunk%40[^"]+-linux-x86_64\.rpm)".*/\1/p' | head -n 1)"
-        test -n "${CHIPMUNK_URL}" && test "${CHIPMUNK_URL}" != "null"
-        echo "Installing from: ${CHIPMUNK_URL}"
+        # Install Chipmunk (pinned v4.0.1, 2026-06-12)
+        # To update: browse https://github.com/esrlabs/chipmunk/releases, copy new RPM URL
+        CHIPMUNK_URL="https://github.com/esrlabs/chipmunk/releases/download/4.0.1/chipmunk%404.0.1-linux-x86_64.rpm"
+        echo "Installing Chipmunk from: ${CHIPMUNK_URL}"
         dnf5 install -y "${CHIPMUNK_URL}"
 
         dnf5 clean all

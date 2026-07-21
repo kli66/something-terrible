@@ -58,12 +58,18 @@ Wants=network-online.target
 Image=docker.io/1467078763/metapi@sha256:d6118229e7d2423262b253a419baf18c22f1682a7bbc7d3c756d090aa2b295c6
 ContainerName=metapi
 PublishPort=127.0.0.1:4000:4000
-Volume=metapi-data:/app/data
+# :U chowns the volume to the container's run-user (image runs as uid 1000
+# "node", not root). Without it the node user can't create the SQLite DB in
+# a root-owned named volume → better-sqlite3 SQLITE_CANTOPEN at startup.
+Volume=metapi-data:/app/data:U
 Environment=PORT=4000
 Environment=DATA_DIR=/app/data
 Environment=TZ=Asia/Hong_Kong
-Environment=CHECKIN_CRON=0 8 * * *
-Environment=BALANCE_REFRESH_CRON=0 * * * *
+# Quote cron values: systemd's Environment= parser splits on unquoted
+# whitespace, so `CHECKIN_CRON=0 8 * * *` would reach the container as
+# `CHECKIN_CRON=0` and node-cron crashes on the one-field expression.
+Environment="CHECKIN_CRON=0 8 * * *"
+Environment="BALANCE_REFRESH_CRON=0 * * * *"
 
 [Service]
 Restart=on-failure

@@ -51,7 +51,11 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=docker.io/1467078763/metapi:latest
+# Pinned by digest (image built 2026-06-24, MIT-licensed, upstream: github.com/cita-777/metapi).
+# The image lives under a personal Docker Hub account, so pin rather than track :latest.
+# TODO(kai): self-build metapi from source and repoint this at your own registry — see
+# docs/self-build-todo.md. To bump: skopeo inspect docker://docker.io/1467078763/metapi:latest
+Image=docker.io/1467078763/metapi@sha256:d6118229e7d2423262b253a419baf18c22f1682a7bbc7d3c756d090aa2b295c6
 ContainerName=metapi
 PublishPort=127.0.0.1:4000:4000
 Volume=metapi-data:/app/data

@@ -1,0 +1,69 @@
+# metapi — unified LLM gateway aggregating multiple relay/reseller panels
+#
+# This rootless user service runs metapi (https://github.com/cita-777/metapi),
+# a "relay-of-relays" gateway that unifies multiple upstream LLM providers —
+# reseller/aggregator panels (New API, One API, OneHub, Sub2API, etc.), direct
+# provider APIs (OpenAI/Anthropic/Gemini), and OAuth logins (Codex/Claude/Gemini
+# CLI) — behind a single endpoint and key. It exposes both OpenAI-compatible
+# (/v1/chat/completions) and Anthropic-compatible (/v1/messages) surfaces, so
+# claude-code and codex-cli can both point at it.
+#
+# The UI/gateway listens on http://127.0.0.1:4000 (localhost-only).
+#
+# SECRETS (one-time, per machine — never bake these into the image):
+#
+#   The three secrets below MUST be provided at runtime via a local systemd
+#   drop-in (not committed to git). Generate strong random values:
+#
+#     mkdir -p ~/.config/systemd/user/metapi.service.d
+#     cat > ~/.config/systemd/user/metapi.service.d/secrets.conf <<EOF
+#     [Service]
+#     Environment=AUTH_TOKEN=$(openssl rand -hex 32)
+#     Environment=PROXY_TOKEN=sk-$(openssl rand -hex 32)
+#     Environment=ACCOUNT_CREDENTIAL_SECRET=$(openssl rand -hex 32)
+#     EOF
+#     systemctl --user daemon-reload
+#
+#   - AUTH_TOKEN: admin login for the web UI (changeable in UI after first boot)
+#   - PROXY_TOKEN: the key downstream clients (claude-code/codex-cli) authenticate
+#     with when calling /v1/* (changeable in UI after first boot)
+#   - ACCOUNT_CREDENTIAL_SECRET: encrypts stored upstream account credentials at rest
+#
+# SETUP:
+#
+#   systemctl --user start metapi.service
+#   systemctl --user enable metapi.service   # (optional: auto-start at login)
+#
+#   Then open http://127.0.0.1:4000, log in with AUTH_TOKEN, and add your upstream
+#   sites/accounts and downstream keys through the UI. Config lives in the
+#   metapi-data volume (SQLite) — no external database required.
+#
+# CLIENT SETUP (after creating a downstream key in the UI):
+#
+#   claude-code  → ANTHROPIC_BASE_URL=http://127.0.0.1:4000
+#                  ANTHROPIC_AUTH_TOKEN=<your PROXY_TOKEN or a downstream key>
+#   codex-cli    → base_url = "http://127.0.0.1:4000/v1" in ~/.codex/config.toml
+
+[Unit]
+Description=metapi unified LLM gateway
+Documentation=https://github.com/cita-777/metapi
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=docker.io/1467078763/metapi:latest
+ContainerName=metapi
+PublishPort=127.0.0.1:4000:4000
+Volume=metapi-data:/app/data
+Environment=PORT=4000
+Environment=DATA_DIR=/app/data
+Environment=TZ=Asia/Hong_Kong
+Environment=CHECKIN_CRON=0 8 * * *
+Environment=BALANCE_REFRESH_CRON=0 * * * *
+
+[Service]
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=default.target

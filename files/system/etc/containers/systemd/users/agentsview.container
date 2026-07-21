@@ -1,0 +1,42 @@
+# agentsview — web UI for browsing Claude Code agent sessions
+#
+# This rootless user service runs agentsview (https://github.com/kenn-io/agentsview),
+# a web-based viewer for Claude Code project sessions and conversation history.
+# The UI is accessible at http://127.0.0.1:8080
+#
+# SETUP:
+#
+# agentsview auto-discovers sessions from ~/.claude/projects (mounted read-only).
+# Data (SQLite database) persists in the agentsview-data named volume.
+#
+# Start the service:
+#
+#   systemctl --user start agentsview.service
+#   systemctl --user enable agentsview.service  # (optional: auto-start at login)
+#
+# Then open: http://127.0.0.1:8080
+#
+# NOTE: The container runs as root internally but is managed as a rootless podman
+# service under your user account. Use a named volume (not a bind mount) for /data
+# to avoid permission issues.
+
+[Unit]
+Description=agentsview web UI for Claude Code sessions
+Documentation=https://github.com/kenn-io/agentsview
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=ghcr.io/kenn-io/agentsview:latest
+ContainerName=agentsview
+PublishPort=127.0.0.1:8080:8080
+Volume=%h/.claude/projects:/agents/claude:ro,Z
+Volume=agentsview-data:/data
+Environment=CLAUDE_PROJECTS_DIR=/agents/claude
+
+[Service]
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=default.target

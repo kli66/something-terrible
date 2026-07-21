@@ -70,6 +70,13 @@ Environment=TZ=Asia/Hong_Kong
 # `CHECKIN_CRON=0` and node-cron crashes on the one-field expression.
 Environment="CHECKIN_CRON=0 8 * * *"
 Environment="BALANCE_REFRESH_CRON=0 * * * *"
+# Forward the three runtime secrets into the container by NAME only (bare
+# `--env NAME`, no value). Their values come from the systemd service
+# environment set by the local drop-in (metapi.service.d/secrets.conf) and
+# are NOT committed here. Without this, Quadlet only passes the [Container]
+# Environment= vars above, so metapi falls back to its `change-me-*` default
+# tokens and admin/proxy login fails.
+PodmanArgs=--env AUTH_TOKEN --env PROXY_TOKEN --env ACCOUNT_CREDENTIAL_SECRET
 
 [Service]
 Restart=on-failure

@@ -30,6 +30,7 @@ modules:
         - librime-lua
         - wdisplays
         - ghostty
+        - kitty
         - niri
         - xwayland-satellite
         - ImageMagick

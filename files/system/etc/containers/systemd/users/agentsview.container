@@ -32,8 +32,10 @@ Image=ghcr.io/kenn-io/agentsview:latest
 ContainerName=agentsview
 PublishPort=127.0.0.1:8080:8080
 
-# Data persistence
-Volume=agentsview-data:/data
+# Data persistence. :U chowns the volume to the container's run-user; without
+# it the app can't write /data/config.toml.lock (permission denied) on a
+# root-seeded named volume and exits 1 at startup.
+Volume=agentsview-data:/data:U
 
 # Agent session directories (Linux paths, read-only).
 #

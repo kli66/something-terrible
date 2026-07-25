@@ -7,10 +7,9 @@
 # boot by snapper-home-init.service, because /var/home is the user data
 # partition and does not exist at image-build time.
 #
-# Fedora's snapper (0.13) ships no default template and no SNAPPER_CONFIGS
-# registry file; /usr/libexec/snapper/systemd-helper auto-discovers every
-# config present in /etc/snapper/configs/, so this complete file is all the
-# timers need.
+# Fedora's snapper (0.13) discovers configs through SNAPPER_CONFIGS in
+# /etc/sysconfig/snapper. The image ships that registry with "home" enabled so
+# both the CLI and /usr/libexec/snapper/systemd-helper can find this config.
 
 # subvolume to snapshot
 SUBVOLUME="/var/home"

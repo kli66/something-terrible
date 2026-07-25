@@ -4,6 +4,7 @@ set -euo pipefail
 dnf="recipes/module-recipes/dnf.yml"
 systemd="recipes/module-recipes/systemd.yml"
 conf="files/system/etc/snapper/configs/home"
+registry="files/system/etc/sysconfig/snapper"
 init_unit="files/system/etc/systemd/system/snapper-home-init.service"
 init_script="files/system/usr/libexec/snapper-home-init.sh"
 
@@ -17,6 +18,7 @@ grep -Fq "snapper-cleanup.timer" "${systemd}"
 grep -Fq "snapper-home-init.service" "${systemd}"
 
 # config targets /var/home with the lean, cache-aware timeline retention
+grep -Fxq 'SNAPPER_CONFIGS="home"' "${registry}"
 grep -Fq 'SUBVOLUME="/var/home"' "${conf}"
 grep -Fq 'FSTYPE="btrfs"' "${conf}"
 grep -Fq 'TIMELINE_CREATE="yes"' "${conf}"

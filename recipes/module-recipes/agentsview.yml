@@ -1,0 +1,8 @@
+type: containerfile
+snippets:
+  # AgentsView 0.38.1. When updating, change this annotation, the pinned digest,
+  # and the build-time version assertion together. Resolve the release digest with:
+  # skopeo inspect --format '{{.Digest}}' docker://ghcr.io/kenn-io/agentsview:<version>
+  - |
+    COPY --from=ghcr.io/kenn-io/agentsview@sha256:5111d313def68791c0b98754289d2f027e50f2fe5ea970c86ce7b68f296193b8 /usr/local/bin/agentsview /usr/bin/agentsview
+    RUN /usr/bin/agentsview --version | grep -F 0.38.1

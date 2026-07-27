@@ -1,3 +1,6 @@
+# HISTORICAL: superseded by the image-baked host binary and agentsview.service.
+# This Quadlet is retained for context only and is not copied into the runtime image.
+#
 # agentsview — web UI for browsing AI coding agent sessions
 #
 # This rootless user service runs agentsview (https://github.com/kenn-io/agentsview),

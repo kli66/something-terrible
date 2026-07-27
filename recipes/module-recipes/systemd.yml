@@ -27,3 +27,7 @@ user:
     # `spawn "dms" "run"` — that would launch DMS twice. Niri startup/keybinds live in the
     # user dotfile ~/.config/niri/config.kdl (not baked into this image).
     - dms.service
+    # Host-native AgentsView can invoke the authenticated Linuxbrew Claude and Codex
+    # CLIs for Insights. Its unit is bound to Kai's graphical session and keeps all
+    # configuration, authentication, session, and database state in the user home.
+    - agentsview.service

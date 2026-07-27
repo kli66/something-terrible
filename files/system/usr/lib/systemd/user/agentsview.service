@@ -1,0 +1,18 @@
+[Unit]
+Description=AgentsView local coding-agent session viewer
+Documentation=https://github.com/kenn-io/agentsview
+ConditionUser=kai
+Requisite=graphical-session.target
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/agentsview serve --host 127.0.0.1 --port 8080 --no-browser
+Restart=on-failure
+RestartSec=5s
+Environment=PATH=/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=AGENTSVIEW_TELEMETRY_ENABLED=0
+
+[Install]
+WantedBy=graphical-session.target

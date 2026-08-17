@@ -1,0 +1,18 @@
+[Unit]
+Description=Mount the persistent Nix store
+DefaultDependencies=no
+After=local-fs.target
+Before=systemd-tmpfiles-setup.service
+Before=nix-daemon.service
+Before=nix-daemon.socket
+RequiresMountsFor=/var
+ConditionPathIsDirectory=/nix
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/mount-nix-store
+ExecStop=/usr/bin/umount /nix
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

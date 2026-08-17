@@ -17,6 +17,10 @@ modules:
         - clang-tools-extra
         - ripgrep
         - fd-find
+        # Fedora's Nix package enables nix-command and flakes by default. The
+        # writable store is bind-mounted from /var/lib/nix at early boot.
+        - nix
+        - nix-daemon
         - distrobox
         - podman-docker
         - podman-compose

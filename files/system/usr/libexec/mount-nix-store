@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+# bootc keeps /var writable and persistent while the image-owned root is
+# read-only. Fedora's nix-filesystem package provides the /nix mount point.
+install -d -m 0755 /var/lib/nix
+test -d /nix
+
+if ! mountpoint -q /nix; then
+  mount --bind /var/lib/nix /nix
+fi

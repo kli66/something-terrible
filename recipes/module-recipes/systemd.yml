@@ -1,6 +1,9 @@
 type: systemd
 system:
   enabled:
+    # Mount the persistent Nix store before the RPM's tmpfiles and daemon run.
+    - nix-store-mount.service
+    - nix-daemon.service
     - greetd.service
     # Btrfs timeline snapshots of /var/home. The timers auto-discover the
     # config shipped at /etc/snapper/configs/home; snapper-home-init creates

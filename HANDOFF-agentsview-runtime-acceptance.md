@@ -27,7 +27,7 @@ podman ps --filter name=agentsview --format '{{.Names}}'
 
 Pass criteria:
 
-- Version reports `0.38.1`.
+- Version reports `0.45.0`.
 - The unit is `enabled` and `active`.
 - `FragmentPath` is `/usr/lib/systemd/user/agentsview.service`.
 - The service environment has Linuxbrew first in `PATH` and `AGENTSVIEW_TELEMETRY_ENABLED=0`.

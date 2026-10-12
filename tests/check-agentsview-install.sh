@@ -19,10 +19,10 @@ fail() {
 # The binary comes from the official image at an immutable digest. The release
 # annotation, digest, and executable build assertion must move together.
 grep -Fxq "type: containerfile" "${module}" || fail "AgentsView module is not a containerfile module"
-grep -Fq "# AgentsView 0.38.1." "${module}" || fail "missing pinned version annotation"
+grep -Fq "# AgentsView 0.45.0." "${module}" || fail "missing pinned version annotation"
 grep -Fq "skopeo inspect --format '{{.Digest}}' docker://ghcr.io/kenn-io/agentsview:<version>" "${module}" || fail "missing version-update instructions"
-grep -Fq "COPY --from=ghcr.io/kenn-io/agentsview@sha256:5111d313def68791c0b98754289d2f027e50f2fe5ea970c86ce7b68f296193b8 /usr/local/bin/agentsview /usr/bin/agentsview" "${module}" || fail "missing exact AgentsView image digest or copy path"
-grep -Fq "RUN /usr/bin/agentsview --version | grep -F 0.38.1" "${module}" || fail "missing build-time executable/version assertion"
+grep -Fq "COPY --from=ghcr.io/kenn-io/agentsview@sha256:41789f305701301c6f3b7fa359dc2f095954cc4db65906e0d1c6ad3089cb66bc /usr/local/bin/agentsview /usr/bin/agentsview" "${module}" || fail "missing exact AgentsView image digest or copy path"
+grep -Fq "RUN /usr/bin/agentsview --version | grep -F 0.45.0" "${module}" || fail "missing build-time executable/version assertion"
 
 # files.yml must install the user unit before the systemd module enables it;
 # the binary module must also run before systemd enablement.

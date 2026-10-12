@@ -45,14 +45,15 @@ modules:
         - greetd
         - greetd-selinux
         - tuigreet
-        # DankMaterialShell (DMS) shell + greeter. Only `dms` lives in the
-        # avengemedia/dms COPR; the rest (quickshell-git, dms-greeter, danksearch,
-        # dankcalendar-git) come from avengemedia/danklinux, enabled transitively
-        # as a coprdep of dms.
-        # Use quickshell-git, NOT plain quickshell 0.3.0: danklinux's quickshell-git
-        # (0.3.1^git) Provides+Conflicts quickshell, and `dms` now requires the -git
-        # build, so pinning 0.3.0 makes the two collide at install time. 0.3.1^git is
-        # newer than 0.3.0 and still carries the 2026-04-06 pipewire fix.
+        # DankMaterialShell (DMS) shell + greeter. Of the packages listed here, only
+        # `dms` lives in the avengemedia/dms COPR; the rest (quickshell-git, dms-greeter,
+        # danksearch, dankcalendar-git) come from avengemedia/danklinux, enabled
+        # transitively as a coprdep of dms.
+        # Use quickshell-git, NOT plain quickshell: danklinux publishes both, and they
+        # conflict with each other (each declares a Conflicts against the other), so only
+        # one can ever be installed. `dms` requires (quickshell or quickshell-git) but is
+        # developed against quickshell's git tree, so we track the -git build; pinning
+        # plain quickshell would put us on a frozen release that lags what DMS expects.
         # Still NOT noctalia's noctalia-qs fork — noctalia-shell stays out of
         # scripts.yml so nothing pulls noctalia-qs (which also Provides quickshell).
         - dms

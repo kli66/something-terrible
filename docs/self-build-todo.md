@@ -6,13 +6,15 @@ The metapi gateway (`files/system/etc/containers/systemd/users/metapi.container`
 pulls a prebuilt image from a **personal Docker Hub account**:
 
 ```
-docker.io/1467078763/metapi@sha256:d6118229e7d2423262b253a419baf18c22f1682a7bbc7d3c756d090aa2b295c6
+docker.io/1467078763/metapi@sha256:42577a28ced1c6d6696499dd4969b2bd5fd039317416e4ec5077eff28e10915f
 ```
 
 metapi holds credentials for every upstream LLM provider account (reseller panels, the
 corporate relay, direct provider keys). Trusting an unnamespaced personal image for that is a
 supply-chain smell. The digest pin mitigates silent tampering (the image can't change under a
-fixed digest), but it does **not** establish provenance — we never audited what's in it.
+fixed digest), but it does **not** establish provenance — we never audited what's in it. Note
+that every interim bump (like the one that moved the pin to this digest) adopts a fresh,
+unaudited personal build; the revision below is exactly what step 1 is meant to review.
 
 ## What to do
 
@@ -20,7 +22,7 @@ Build metapi from source (MIT-licensed, https://github.com/cita-777/metapi) and 
 Quadlet unit at an image you control:
 
 1. Clone + review the source at the revision the pinned image was built from:
-   `org.opencontainers.image.revision = 41767a65ec8e5470a9a70f4615b47dc24949afff`
+   `org.opencontainers.image.revision = 88634b0d7207039e8d0c0d026c38870cf74bf2bc`
    (skim the upstream-account adapters and credential-handling paths especially).
 2. `docker build` / `podman build` the image yourself.
 3. Push to a registry you own (e.g. `ghcr.io/kli66/metapi`) — the same publish path this image

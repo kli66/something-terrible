@@ -7,9 +7,11 @@ greetd="files/system/etc/greetd/config.toml"
 systemd_recipe="recipes/module-recipes/systemd.yml"
 
 # --- DankMaterialShell packages present in dnf.yml (from avengemedia/dms COPR +
-#     danklinux coprdep). `dms` ships the `dms` CLI itself (no separate dms-cli), and
-#     quickshell-git — not plain quickshell 0.3.0 — is required (they Provide+Conflict
-#     quickshell and `dms` needs the -git build; see the note in dnf.yml). ---
+#     danklinux coprdep). `dms` ships QML assets and the dms.service unit; the CLI
+#     binary comes from separate dms-cli, which `dms` requires (dnf pulls it in
+#     transitively, so it is deliberately not listed here). quickshell-git — not plain
+#     quickshell — is required: the two conflict with each other, and `dms` needs the
+#     -git build (see the note in dnf.yml). ---
 grep -Fq "avengemedia/dms" "${dnf_recipe}"
 for pkg in dms dms-greeter quickshell-git danksearch dankcalendar-git; do
   grep -Eq "^[[:space:]]*-[[:space:]]+${pkg}\$" "${dnf_recipe}" || {

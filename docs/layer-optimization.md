@@ -13,7 +13,7 @@ The root cause: **no rechunking** → timestamp churn + unstable layer boundarie
 
 ### A. Enable rechunk (dominant fix)
 
-Set `rechunk: true` in `.github/workflows/build.yml` (blue-build/github-action@v1.12).
+Set `rechunk: true` in `.github/workflows/build.yml` (blue-build/github-action@v1.13).
 
 **What rechunk does:**
 - **Timestamp clamping:** fixes file mtimes so identical content → identical digest
@@ -26,13 +26,16 @@ Set `rechunk: true` in `.github/workflows/build.yml` (blue-build/github-action@v
 
 ### B. Pin vendored RPMs
 
-Replaced `curl … releases/latest` scraping with pinned version URLs in `scripts.yml`:
-- **Bettbox** v0.1.0 (2025-05-08)
-- **CC Switch** v2.0.5 (2026-06-06)
-- **Chipmunk** v3.16.2 (2026-02-27)
-- **Bitwarden** still uses vendor redirect (acceptable; layer only changes when Bitwarden ships a release)
+Replaced `curl … releases/latest` scraping with explicitly pinned release RPM URLs in `scripts.yml`
+(Bettbox, CC Switch, Chipmunk). **Bitwarden** still uses a vendor redirect (acceptable; its layer
+only changes when Bitwarden ships a release).
 
-Removed `no-cache: true` — these layers now cache and only change on deliberate version bumps.
+The module has no `no-cache: true` — these layers cache and only change on deliberate version bumps.
+
+The *current* pins and their dates are not inventoried here — they live in
+`recipes/module-recipes/scripts.yml`, in the comment next to each URL (keep the URL and its
+version/date annotation in sync when bumping). `tests/check-*.sh` grep-assert the pins
+(e.g. `tests/check-bettbox-install.sh`, `tests/check-agentsview-install.sh`).
 
 **To update:** browse the GitHub releases page, copy the new RPM URL, update the comment with version/date.
 

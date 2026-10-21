@@ -46,4 +46,131 @@ modules:
         echo "Installing Chipmunk from: ${CHIPMUNK_URL}"
         dnf5 install -y "${CHIPMUNK_URL}"
 
+        # Install Proton Pass Desktop + CLI from Proton's official channel.
+        # Proton publishes no Fedora/RPM Fusion/COPR package, no GPG-signed RPM, and
+        # no signed repository, so scripts.yml is the documented escape hatch. The
+        # integrity anchor is the checksum listed in the same vendor manifest that
+        # names the URL: that catches corruption, truncation, and a retargeted
+        # download, but it shares an origin with the artifact and is NOT a signature
+        # check (contrast the sibling 1Password change's rpmkeys --checksig). Do not
+        # replace this with a Flatpak/Snap community wrapper or a third-party repack.
+        # Resolved-latest policy: both manifests are re-read whenever this layer
+        # re-executes, so a rebuild picks up Proton's current Stable desktop build
+        # and current pass-cli. The layer still caches, so resolution happens on a
+        # cache-invalidating change, not on every trivial rebuild.
+        # Last validated 2026-10-21: desktop 1.42.0 (rollout 1), CLI 2.5.1.
+        PASS_GUI_MANIFEST_URL="https://proton.me/download/PassDesktop/linux/x64/version.json"
+        PASS_CLI_MANIFEST_URL="https://proton.me/download/pass-cli/versions.json"
+
+        # jq parses both manifests. The vendor's own install.sh lists curl + jq as
+        # its Linux dependencies; do not assume the build container ships jq.
+        command -v jq >/dev/null || dnf5 install -y jq
+
+        # Newest entry whose CategoryName is exactly "Stable". RolloutPercentage
+        # governs gradual delivery of a build to existing clients, not artifact
+        # validity, so it is logged and never used as a filter. No Stable entry, no
+        # RPM file, or more than one RPM file all fail the build: never fall back to
+        # the Beta channel. sort_by(.ReleaseDate) relies on every entry carrying the
+        # same ISO-8601 UTC shape, which all 67 do today; the NVR assertions below
+        # still compare against whatever the selection produced.
+        PASS_GUI_MANIFEST="/tmp/proton-pass-version.json"
+        curl -fL "${PASS_GUI_MANIFEST_URL}" -o "${PASS_GUI_MANIFEST}"
+        test -s "${PASS_GUI_MANIFEST}"
+        test "$(jq '[.Releases[] | select(.CategoryName == "Stable")] | length' "${PASS_GUI_MANIFEST}")" -gt 0
+        PASS_STABLE='[.Releases[] | select(.CategoryName == "Stable")] | sort_by(.ReleaseDate) | last'
+        PASS_VERSION="$(jq -er "${PASS_STABLE} | .Version" "${PASS_GUI_MANIFEST}")"
+        PASS_ROLLOUT="$(jq -er "${PASS_STABLE} | .RolloutPercentage" "${PASS_GUI_MANIFEST}")"
+        PASS_RPM_FILE="${PASS_STABLE} | .File[] | select(.Identifier == \".rpm (Fedora/RHEL)\")"
+        test "$(jq "[${PASS_RPM_FILE}] | length" "${PASS_GUI_MANIFEST}")" -eq 1
+        PASS_RPM_URL="$(jq -er "${PASS_RPM_FILE} | .Url" "${PASS_GUI_MANIFEST}")"
+        PASS_RPM_SHA512="$(jq -er "${PASS_RPM_FILE} | .Sha512CheckSum" "${PASS_GUI_MANIFEST}")"
+
+        # Constraint 1 enforced mechanically: a manifest that points somewhere other
+        # than proton.me stops the build instead of fetching whatever it names.
+        case "${PASS_RPM_URL}" in
+          https://proton.me/*) ;;
+          *) echo "unexpected Proton Pass RPM host: ${PASS_RPM_URL}" >&2; exit 1 ;;
+        esac
+
+        PASS_RPM="/tmp/proton-pass.rpm"
+        echo "Installing Proton Pass ${PASS_VERSION} (rollout ${PASS_ROLLOUT}%): ${PASS_RPM_URL}"
+        curl -fL "${PASS_RPM_URL}" -o "${PASS_RPM}"
+        test -s "${PASS_RPM}"
+        # No SIGPGP on this RPM (rpm -Kv: header/payload digests only), so the manifest
+        # Sha512CheckSum is the anchor. errexit is on in this snippet (`set -oue
+        # pipefail` at the top of scripts.yml), but this is the trust boundary, so it
+        # fails explicitly rather than merely relying on errexit.
+        printf '%s  %s\n' "${PASS_RPM_SHA512}" "${PASS_RPM}" | sha512sum -c - \
+          || { echo "Proton Pass RPM sha512 mismatch" >&2; exit 1; }
+        # A retargeted or renamed file must fail here, not silently install something
+        # else. Proton currently publishes <version>-1; a different release suffix
+        # stops the build for deliberate review.
+        test "$(rpm -qp --qf '%{NAME}' "${PASS_RPM}")" = "proton-pass"
+        test "$(rpm -qp --qf '%{ARCH}' "${PASS_RPM}")" = "x86_64"
+        test "$(rpm -qp --qf '%{VERSION}' "${PASS_RPM}")" = "${PASS_VERSION}"
+        test "$(rpm -qp --qf '%{VERSION}-%{RELEASE}' "${PASS_RPM}")" = "${PASS_VERSION}-1"
+        dnf5 install -y "${PASS_RPM}"
+        rm -f "${PASS_RPM}"
+
+        # pass-cli is a single Rust binary and Proton publishes no RPM/deb for it.
+        # Replicate the deterministic steps of the vendor install.sh (fetch manifest,
+        # check formatVersion, download, verify sha256, install) instead of piping
+        # that script into a root shell inside the image build.
+        PASS_CLI_MANIFEST="/tmp/pass-cli-versions.json"
+        PASS_CLI_BIN="/tmp/pass-cli"
+        curl -fL "${PASS_CLI_MANIFEST_URL}" -o "${PASS_CLI_MANIFEST}"
+        test -s "${PASS_CLI_MANIFEST}"
+        # The vendor install.sh refuses any formatVersion other than 1; mirror that so
+        # a schema change stops the build instead of reading the wrong fields.
+        test "$(jq -er '.formatVersion' "${PASS_CLI_MANIFEST}")" = "1"
+        PASS_CLI_VERSION="$(jq -er '.passCliVersions.version' "${PASS_CLI_MANIFEST}")"
+        PASS_CLI_URL="$(jq -er '.passCliVersions.urls.linux.x86_64.url' "${PASS_CLI_MANIFEST}")"
+        PASS_CLI_SHA256="$(jq -er '.passCliVersions.urls.linux.x86_64.hash' "${PASS_CLI_MANIFEST}")"
+        # The manifest key really is `.hash` (verified 2026-10-21: keys are ["hash","url"]),
+        # not `.sha256`; jq -er fails closed if that ever changes shape.
+        case "${PASS_CLI_URL}" in
+          https://proton.me/*) ;;
+          *) echo "unexpected pass-cli host: ${PASS_CLI_URL}" >&2; exit 1 ;;
+        esac
+        echo "Installing Proton Pass CLI ${PASS_CLI_VERSION}: ${PASS_CLI_URL}"
+        curl -fL "${PASS_CLI_URL}" -o "${PASS_CLI_BIN}"
+        test -s "${PASS_CLI_BIN}"
+        printf '%s  %s\n' "${PASS_CLI_SHA256}" "${PASS_CLI_BIN}" | sha256sum -c - \
+          || { echo "pass-cli sha256 mismatch" >&2; exit 1; }
+        test "$(od -An -tx1 -N4 "${PASS_CLI_BIN}" | tr -d ' \n')" = "7f454c46"
+        # /usr/bin, not /usr/local/bin: on this atomic image /usr/local is a symlink
+        # to /var/usrlocal, which is not the image-owned tree. /usr is.
+        install -Dm0755 "${PASS_CLI_BIN}" /usr/bin/pass-cli
+        rm -f "${PASS_CLI_BIN}" "${PASS_GUI_MANIFEST}" "${PASS_CLI_MANIFEST}"
+
+        # Assert against the versions the manifests just supplied, not a second
+        # hardcoded literal. --version is safe: the CLI fails closed without a
+        # session ("This operation requires an authenticated client") and writes no
+        # state.
+        rpm -q proton-pass
+        test "$(rpm -q --qf '%{VERSION}-%{RELEASE}' proton-pass)" = "${PASS_VERSION}-1"
+        test -x /usr/bin/proton-pass
+        test "$(readlink -f /usr/bin/proton-pass)" = "/usr/lib/proton-pass/Proton Pass"
+        test -f /usr/share/applications/proton-pass.desktop
+        /usr/bin/pass-cli --version | grep -F "Proton Pass CLI ${PASS_CLI_VERSION}"
+        test ! -e /usr/local/bin/pass-cli
+
+        # Leave the vendor artifact's security posture alone. The package ships
+        # chrome-sandbox mode 0755 with no setuid bit, so Chromium relies on
+        # unprivileged user namespaces. Do NOT "fix" this here (no chmod u+s, no
+        # --no-sandbox); a launch failure is a separate follow-up decision.
+        test "$(stat -c '%a' /usr/lib/proton-pass/chrome-sandbox)" = "755"
+        test ! -u /usr/lib/proton-pass/chrome-sandbox
+
+        # The RPM has no scriptlets, so nothing wrote a vendor repo file or imported a
+        # key; --version must not have created account/session state either.
+        test ! -e /etc/yum.repos.d/proton.repo
+        # Capture the scan before testing it: if find itself fails (unset or
+        # unreadable HOME), an inline `test -z "$(find ...)"` would read the empty
+        # result as "no state found" and pass vacuously.
+        PASS_HOME_STATE="$(find "${HOME}" -maxdepth 4 \
+          \( -iname '*proton*' -o -iname 'pass-cli*' \) -print -quit)" \
+          || { echo "Proton Pass state scan failed under ${HOME}" >&2; exit 1; }
+        test -z "${PASS_HOME_STATE}"
+
         dnf5 clean all

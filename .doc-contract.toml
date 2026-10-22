@@ -1,0 +1,18 @@
+schema_version = 1
+repo_name = "something-terrible"
+roadmap = "docs/roadmap.md"
+edge_fingerprints = "advisory"
+optional_roots = []
+
+[root_nodes]
+# The operating contract itself (living: the only doc we keep true by hand).
+agents = "AGENTS.md"
+# Flat managed docs: durable reference and backlog that would otherwise sit
+# outside the change/ADR/spec discovery tree.
+hardware-notes = "docs/hardware-notes.md"
+layer-optimization = "docs/layer-optimization.md"
+self-build-todo = "docs/self-build-todo.md"
+handoff-agentsview = "HANDOFF-agentsview-runtime-acceptance.md"
+
+[capability]
+mode = "skip"

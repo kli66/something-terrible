@@ -1,3 +1,7 @@
+---
+persistence: frozen
+self_hash: 10e74b2ca1aaa3d5
+---
 # Layer optimization
 
 ## Problem

@@ -1,3 +1,7 @@
+---
+persistence: deferred
+---
+
 # TODO: self-build the metapi image
 
 ## Why

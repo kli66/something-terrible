@@ -1,3 +1,7 @@
+---
+persistence: ephemeral
+---
+
 # AgentsView runtime acceptance
 
 This check must be performed on the newly built and booted image. Repository validation alone does not prove that the binary, user service, CLI authentication, session discovery, or Insights work at runtime.

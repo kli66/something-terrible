@@ -1,3 +1,7 @@
+---
+persistence: frozen
+self_hash: 5d83d34eab1eaca4
+---
 # Hardware notes — target machine (Lenovo 21J3CTO1WW)
 
 Durable, self-contained diagnostic knowledge about the physical machine this image is

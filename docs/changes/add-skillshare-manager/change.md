@@ -1,3 +1,20 @@
+---
+id: add-skillshare-manager
+status: proposed
+persistence: ephemeral
+depends_on:
+files_owned:
+  - docs/changes/add-skillshare-manager/change.md
+  - recipes/module-recipes/skillshare.yml
+  - recipes/recipe.yml
+  - files/system/usr/lib/systemd/user/skillshare.service
+  - files/system/usr/libexec/skillshare-prepare-ui
+  - recipes/module-recipes/systemd.yml
+  - tests/check-skillshare-install.sh
+  - docs/skillshare.md
+  - AGENTS.md
+---
+
 # Add Skillshare as the image-managed skill service
 
 Status: Proposed (not accepted) · Proposed 2026-08-06

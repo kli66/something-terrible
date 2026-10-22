@@ -1,8 +1,136 @@
-# AGENTS.md
+---
+persistence: living
+---
 
-This file provides guidance to LLM agents when working with code in this repository.
+# AGENTS.md — how to work in this repo (the operating contract)
 
-## What this is
+The durable operating contract for any agent touching this repo, followed by this image's
+project-specific guidance. The stdlib-only `doc-contract` CLI reads `.doc-contract.toml` and keeps
+the mechanically checkable parts of this contract honest.
+
+## The doc taxonomy (where each kind of doc lives)
+
+```
+AGENTS.md                        this file — the operating contract + change/handoff protocol (living)
+.doc-contract.toml               canonical resolver configuration (the only config input)
+docs/
+  roadmap.md                     cross-change order; edges owned by change front-matter, rendered here (living)
+  changes/                       substantial in-flight work (propose → accept → begin → land → archive)
+    <name>/change.md             default: a single change file (split only if genuinely large)
+    archive/<date>-<name>/       landed changes (lineage)
+  hardware-notes.md              frozen reference — target-hardware diagnostics
+  layer-optimization.md          frozen reference — layer/pinning policy analysis
+  self-build-todo.md             deferred register — trigger-gated backlog, struck on promotion
+  superseded/                    non-Markdown lineage artifacts (not resolver nodes)
+HANDOFF-*.md                     ephemeral scaffolding for a next agent, never the durable home for open work
+```
+
+There is no `docs/adr/` or `docs/spec/` tier yet, and no project capability check
+(`[capability] mode = "skip"` in `.doc-contract.toml`). If a decision ever needs a frozen WHY record,
+add `docs/adr/` and declare it; do not smuggle decisions into the roadmap prose.
+
+**Every managed doc carries a `persistence:` header and is a node in the change-DAG resolver** — so
+none sits unclassified. That includes `AGENTS.md`, `docs/roadmap.md`, the flat docs named above, and
+every change file. They are enumerated in `.doc-contract.toml` `root_nodes`; roots are required by
+default and only IDs listed in `optional_roots` may be absent. Frozen docs additionally carry a
+`self_hash`, refreshed with `doc-contract stamp <node-id>` after a reviewed edit.
+
+The same discovery result bounds value-free secret scanning: declared roots, selected change files,
+and companion Markdown inside selected change folders are scanned. Recipe YAML, `files/`, scripts,
+dependency trees, and untracked files are not scanned merely because they exist below the repository
+root — use a dedicated security tool for repository-wide secret detection.
+
+## What makes this cheap
+
+Every doc carries four attributes; the maintenance model falls out of them:
+
+1. **Question** — exactly one.
+2. **Persistence** — `frozen` (hardware notes, layer analysis, archive — append-only, `self_hash`-guarded) ·
+   `living` (this file, `docs/roadmap.md` — the *only* docs kept true by hand) · `ephemeral`
+   (`docs/changes/` folders, handoffs — cost is *disposal* on land) · `deferred`
+   (`docs/self-build-todo.md` — low-upkeep, entries struck on promotion).
+3. **Canonical owner** — single source for its fact; never maintained in two places.
+4. **Forcing function** — what drags the doc back to true. `frozen` → none. `ephemeral` →
+   delete-on-land. `living` → the change-protocol reconciliation (roadmap refreshed on every change
+   entry/exit) or a tripwire test. `deferred` → a **per-entry Trigger**.
+
+There is no "review cadence." The living set is deliberately small: the roadmap's edges are a
+function of change front-matter (enforced by `doc-contract check`), while the prose stays
+human-judged. The recipe has its own tripwires — `tests/check-*.sh` — but those guard the *image*,
+not these docs.
+
+## Deferred register — `docs/self-build-todo.md`
+
+Forward-looking, trigger-gated work lives there: not a decision, not in-flight, not tripwire-testable.
+Each entry names its **Trigger**. When a trigger fires, promote the entry to a `docs/changes/<name>/`
+folder, strike it from the register, and add it to the roadmap.
+
+## Change weight — scale ceremony to the work
+
+- **Trivial edit** → a `docs/roadmap.md` line + commit. No folder.
+- **Substantial work** → a `docs/changes/<name>/` folder, default a **single `change.md`**
+  (`## Why` · `## What changes` [Δ ADDED/MODIFIED/REMOVED] · `## Tasks` · `## Verify`).
+- **Rare meta-change** → split into `proposal.md` / `design.md` / `tasks.md`, only when each section
+  is genuinely large. Three files is the *ceiling*, not the default.
+
+## Change / handoff protocol (MANDATORY)
+
+Substantial open work lives in a `docs/changes/<name>/` folder — **not** in a root `HANDOFF-*.md`.
+A `HANDOFF-*.md` is ephemeral scaffolding for the next agent, never the durable home for open work.
+
+Each change file opens with YAML front-matter — the **canonical owner of order and status**:
+
+```yaml
+---
+id: <folder-name>
+status: proposed      # proposed | accepted | in-progress | blocked | landed
+persistence: ephemeral
+depends_on: []        # upstream change ids, one direction only; dependents are computed
+files_owned: []       # exact repo-relative paths this change may write
+---
+```
+
+**On entry, before touching anything:**
+
+1. Run `doc-contract reconcile mechanical docs/changes/<name> --phase entry --format json
+   --repo-root .`, then judge the change's claims against the roadmap and the repo: do task IDs,
+   file paths, and status claims still match? Mechanical readiness never replaces that judgment.
+2. If material drift has occurred, repair the change or the roadmap first, then rerun. If a change's
+   detail contradicts a decision record, **stop and surface it** rather than editing the two to match.
+3. Only after a green report and that judgment: `doc-contract begin docs/changes/<name> --repo-root .`.
+
+**On exit, before finishing:**
+
+1. Run `doc-contract reconcile mechanical docs/changes/<name> --phase exit --format json --repo-root .`.
+2. Reconcile semantic claims: tasks actually done, `Verify` evidence recorded, durable findings moved
+   into the frozen/living docs, roadmap narrative still true. Repair, then rerun.
+3. `doc-contract land docs/changes/<name> --repo-root . --dry-run` (add `--diff` when line-level
+   review is wanted), then the reviewed command without `--dry-run`. Landing owns the status edit,
+   roadmap regeneration, fingerprint refresh, journal, and the move to
+   `docs/changes/archive/<date>-<name>/`. Never hand-roll those.
+
+**Dependency-chain rule.** Front-matter `depends_on` is the canonical owner of order; the CLI resolves
+it into the DAG (topo-sort + cycle/dangling/overlap/linkage checks) and renders the Mermaid block in
+`docs/roadmap.md`. The roadmap prose carries rationale and one line per change, not the edges.
+Linkage is checked: an active change must have a roadmap line naming its folder with a status token.
+
+**Hashing policy.** `edge_fingerprints = "advisory"` here: an absent edge hash is accepted, while an
+explicit empty, `PENDING`, malformed, or stale value warns. Frozen `self_hash` validation is always
+strict (append-only). Both hash the canonical body: front matter, line endings, per-line trailing
+whitespace, and boundary blank lines are normalized; prose reflow and Markdown rewrites are
+significant. `doc-contract stamp` owns refreshing them.
+
+## Executing a change → dispatch is one line
+
+The entry/exit steps are standing protocol, so a dispatch never restates them. Once this contract is
+loaded, dispatch collapses to: **"Execute `docs/changes/<name>/`."** That authorizes implementation,
+verification, transactional landing, and exactly one final commit unless the dispatch says otherwise.
+Before dispatch, only an explicit user or reviewer instruction authorizes `doc-contract accept`.
+
+The final commit uses a Conventional Commits header limited to 50 characters, body lines wrapped at
+72, and a concise body under 100 words (omit it when the header suffices).
+
+## Project: what this is
 
 A [BlueBuild](https://blue-build.org/) recipe that builds a personal, signed Fedora **Kinoite 44** (atomic/ostree) OS image, published to `ghcr.io/kli66/something-terrible`. There is no application code — the "source" is declarative YAML describing packages, fonts, files, kernel args, and systemd state baked into the image at build time. The desktop is a **niri** (Wayland) + KDE-portal setup with `greetd`/`tuigreet` login and `fcitx5`/rime input.
 
@@ -15,6 +143,7 @@ A [BlueBuild](https://blue-build.org/) recipe that builds a personal, signed Fed
   for t in tests/check-*.sh; do bash "$t"; done
   ```
   (e.g. `tests/check-bettbox-install.sh`, `tests/check-bitwarden-install.sh` — one per vendored/systemd feature). When you change install logic in `scripts.yml`/`systemd.yml`, update or add a matching `tests/check-*.sh` and run it.
+- **Docs gate**: `doc-contract check --repo-root . --offline` must stay green alongside the suite.
 
 ## Architecture
 

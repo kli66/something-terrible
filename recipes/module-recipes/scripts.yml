@@ -52,8 +52,8 @@ modules:
         # integrity anchor is the checksum listed in the same vendor manifest that
         # names the URL: that catches corruption, truncation, and a retargeted
         # download, but it shares an origin with the artifact and is NOT a signature
-        # check (contrast the sibling 1Password change's rpmkeys --checksig). Do not
-        # replace this with a Flatpak/Snap community wrapper or a third-party repack.
+        # check. Do not replace this with a Flatpak/Snap community wrapper or a
+        # third-party repack.
         # Resolved-latest policy: both manifests are re-read whenever this layer
         # re-executes, so a rebuild picks up Proton's current Stable desktop build
         # and current pass-cli. The layer still caches, so resolution happens on a

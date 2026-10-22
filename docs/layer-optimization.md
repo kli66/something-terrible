@@ -39,10 +39,9 @@ with the artifact, so it is not a signature. Bitwarden's redirect carries no che
 to `bitwarden.com` is its only anchor.
 
 Size delta for the Proton Pass channel: 120,309,189 B downloaded / 390,913,189 B installed for the
-desktop RPM, plus 56,367,544 B for the `pass-cli` binary (which is also the download). Together with
-the proposed `add-1password` change (~147 MB downloaded / ~608 MB installed) the vendor-latest
-channels cost roughly 1.05 GB installed and ~324 MB of download per cache-invalidating rebuild. That
-is a stated consideration when accepting these channels, not a reason to block either change.
+desktop RPM, plus 56,367,544 B for the `pass-cli` binary (which is also the download): roughly
+447,280,733 B installed and 176,676,733 B downloaded per cache-invalidating rebuild. That is a stated
+consideration when accepting this channel, not a reason to block it.
 
 The module has no `no-cache: true` — these layers cache and only change on deliberate version bumps,
 and a vendor-latest layer re-resolves only when it re-executes.

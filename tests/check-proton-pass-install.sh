@@ -147,8 +147,7 @@ if find files/system -iname '*proton*' -print -quit | grep -q .; then
   fail "no Proton Pass config, session, or native-messaging host may be baked under files/system"
 fi
 
-# Deliberately no whole-file negative on 1Password literals: scripts.yml is
-# shared with the additive add-1password block, so such an assertion would fail
-# the moment that sibling change lands.
+# Nothing here asserts the absence of other vendors' literals: scripts.yml is shared, and a
+# whole-file negative would break the moment any sibling install block lands.
 
 echo "check-proton-pass-install: OK"

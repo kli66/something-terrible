@@ -1,6 +1,6 @@
 ---
 persistence: frozen
-self_hash: 10e74b2ca1aaa3d5
+self_hash: 88c64765800b78b4
 ---
 # Layer optimization
 
@@ -31,7 +31,7 @@ Set `rechunk: true` in `.github/workflows/build.yml` (blue-build/github-action@v
 ### B. Pin vendored RPMs; vendor-latest is a named exception, not the default
 
 Replaced `curl … releases/latest` scraping with explicitly pinned release RPM URLs in `scripts.yml`
-(Bettbox, CC Switch, Chipmunk). Accepted vendor-latest channels, in landing order: **Bitwarden**,
+(Bettbox, CC Switch, Chipmunk, Grok Bot). Accepted vendor-latest channels, in landing order: **Bitwarden**,
 which installs from a vendor download redirect, then **Proton Pass**, which resolves both of its
 artifacts from Proton's own JSON channel manifests (`PassDesktop/linux/x64/version.json` for the
 desktop RPM, `pass-cli/versions.json` for the CLI) and verifies the hash that same manifest names.
@@ -40,7 +40,12 @@ release, so a vendor-latest channel costs no more churn than a pin. The integrit
 the difference is deliberate rather than an oversight. Proton Pass verifies the hash that the same
 manifest names, which catches corruption, truncation, and a retargeted download but shares an origin
 with the artifact, so it is not a signature. Bitwarden's redirect carries no checksum at all, so TLS
-to `bitwarden.com` is its only anchor.
+to `bitwarden.com` is its only anchor. Grok Bot's download page publishes neither a manifest nor a
+checksum and serves an unsigned RPM (`rpm -Kv` reports digests only), so its pin carries a committed
+sha256 computed once by the maintainer: that catches a truncated, corrupted, or retargeted download
+as a build failure, but it is not a vendor-published value and not a signature either. The vendor's
+signed yum repo is the stronger channel and a candidate migration once it stops lagging the download
+page.
 
 Size delta for the Proton Pass channel: 120,309,189 B downloaded / 390,913,189 B installed for the
 desktop RPM, plus 56,367,544 B for the `pass-cli` binary (which is also the download): roughly
@@ -55,7 +60,9 @@ The *current* pins and their dates are not inventoried here — they live in
 version/date annotation in sync when bumping). `tests/check-*.sh` grep-assert the pins
 (e.g. `tests/check-bettbox-install.sh`, `tests/check-agentsview-install.sh`).
 
-**To update:** browse the GitHub releases page, copy the new RPM URL, update the comment with version/date.
+**To update:** browse the GitHub releases page (or, for Grok Bot, `https://x.ai/bot` → Linux RPM),
+copy the new RPM URL, recompute the sha256 where the block pins one, and update the comment with
+version/date.
 For a vendor-latest block there is nothing to edit until its resolution is re-checked; refresh that
 block's `Last validated <date>` annotation when it is, and re-run its `tests/check-*.sh`.
 

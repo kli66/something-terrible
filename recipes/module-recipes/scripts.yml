@@ -46,6 +46,53 @@ modules:
         echo "Installing Chipmunk from: ${CHIPMUNK_URL}"
         dnf5 install -y "${CHIPMUNK_URL}"
 
+        # Install Grok Bot (pinned v0.75.3, 2026-10-23)
+        # x.ai/bot serves the Linux build from a build-specific URL under
+        # downloads.cursor.com (grokbot/stable/<build>/linux/x64/...). There is no
+        # version manifest, no checksum file, and no directory listing, so the URL is
+        # pinned like the GitHub-release blocks above.
+        # To update: open https://x.ai/bot, pick Linux (RPM) under "More downloads",
+        # copy the URL (the version appears in the file name), recompute
+        # sha256sum on the downloaded artifact, and refresh the pin, the hash, and this
+        # annotation together.
+        # The download-page RPM is NOT GPG-signed (rpm -Kv: header/payload digests only),
+        # so the pinned sha256 is the integrity anchor: it catches truncation, corruption,
+        # and a retargeted URL. The vendor's yum repo
+        # (https://downloads.cursor.com/yumrepo/grok-bot) has signed builds but lags the
+        # download page (0.75.2 vs 0.75.3 on 2026-10-23), so it is not the source here.
+        GROK_BOT_URL="https://downloads.cursor.com/grokbot/stable/5acb0be5178da83005411731082da2dab1602ca7/linux/x64/grok-bot-0.75.3-1.x86_64.rpm"
+        GROK_BOT_SHA256="171c38d01377b7da2c3772c2cb1ad0f7fc749c2df4d2253052de9a02e2cfe9a8"
+        GROK_BOT_RPM="/tmp/grok-bot.rpm"
+        case "${GROK_BOT_URL}" in
+          https://downloads.cursor.com/*) ;;
+          *) echo "unexpected Grok Bot RPM host: ${GROK_BOT_URL}" >&2; exit 1 ;;
+        esac
+        echo "Installing Grok Bot from: ${GROK_BOT_URL}"
+        curl -fL "${GROK_BOT_URL}" -o "${GROK_BOT_RPM}"
+        test -s "${GROK_BOT_RPM}"
+        printf '%s  %s\n' "${GROK_BOT_SHA256}" "${GROK_BOT_RPM}" | sha256sum -c - \
+          || { echo "Grok Bot RPM sha256 mismatch" >&2; exit 1; }
+        # A renamed or retargeted artifact must fail here, not install something else.
+        # The version literal is a second, independent check that the file the URL names
+        # is the file the RPM header claims to be.
+        test "$(rpm -qp --qf '%{NAME}' "${GROK_BOT_RPM}")" = "grok-bot"
+        test "$(rpm -qp --qf '%{ARCH}' "${GROK_BOT_RPM}")" = "x86_64"
+        test "$(rpm -qp --qf '%{VERSION}-%{RELEASE}' "${GROK_BOT_RPM}")" = "0.75.3-1"
+        dnf5 install -y "${GROK_BOT_RPM}"
+        rm -f "${GROK_BOT_RPM}"
+        # The %post registers /etc/yum.repos.d/grok-bot.repo (gpgcheck + repo_gpgcheck,
+        # key from downloads.cursor.com) even for a local-file install. /usr is immutable
+        # here, so that repo cannot serve an in-place update; disable it the way the terra
+        # repo is disabled, and note the vendor scriptlet preserves an existing enabled=0
+        # on later upgrades.
+        sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/grok-bot.repo
+        # Leave the vendor's Electron sandbox posture alone: %post sets chrome-sandbox to
+        # 4755 only when the installing host lacks unprivileged user namespaces, and 0755
+        # otherwise. Do not chmod it here, and never pass --no-sandbox.
+        test -x /usr/bin/grok-bot
+        test -f /usr/share/applications/grok-bot.desktop
+        test "$(sed -n 's/^enabled=//p' /etc/yum.repos.d/grok-bot.repo)" = "0"
+
         # Install Proton Pass Desktop + CLI from Proton's official channel.
         # Proton publishes no Fedora/RPM Fusion/COPR package, no GPG-signed RPM, and
         # no signed repository, so scripts.yml is the documented escape hatch. The

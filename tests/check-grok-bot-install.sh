@@ -44,6 +44,22 @@ has_code 'case "${GROK_BOT_URL}" in'
 has_code 'https://downloads.cursor.com/*) ;;'
 has_code 'unexpected Grok Bot RPM host: ${GROK_BOT_URL}'
 
+# --- positive: stable-channel drift tripwire ---------------------------------
+# The channel is asked what it currently serves and compared against the pin. It
+# is a review prompt, not an install source: the resolved URL is never fetched.
+has_code 'GROK_BOT_STABLE_URL="https://api2.cursor.sh/updates/download/stable/linux-x64/grok-bot-cc18e4e726507b90"'
+has_code "GROK_BOT_CHANNEL_URL=\"\$(curl -fsS -o /dev/null -w '%{redirect_url}' \"\${GROK_BOT_STABLE_URL}\")\""
+has_code '*"/${GROK_BOT_URL##*/}")'
+has_code 'Grok Bot stable channel did not resolve'
+has_code 'Grok Bot pin is stale: stable channel now serves ${GROK_BOT_CHANNEL_URL}'
+has_code 'Re-pin grok-bot after review: URL, sha256, and the version/date annotation.'
+
+channel_line="$(grep -n 'GROK_BOT_CHANNEL_URL="$(curl' "${script}" | cut -d: -f1)"
+download_line="$(grep -n 'curl -fL "${GROK_BOT_URL}"' "${script}" | cut -d: -f1)"
+test -n "${channel_line}" && test -n "${download_line}"
+test "${channel_line}" -lt "${download_line}" \
+  || fail "the drift tripwire must run before the artifact download"
+
 # --- positive: vendor %post repo is disabled, not enabled --------------------
 # /usr is immutable on this image, so the repo the RPM registers cannot serve an
 # in-place update; leaving it enabled would only widen dnf's third-party surface.
@@ -89,6 +105,12 @@ fi
 
 if printf '%s\n' "${code}" | grep -Eqi '(flatpak|snap)[[:space:]]+(install|add|run)'; then
   fail "Grok Bot must come from the vendor RPM, not flatpak/snap"
+fi
+
+# The stable channel is a comparison target only; installing whatever it returns
+# would drop the sha256 anchor and make version jumps unreviewed.
+if printf '%s\n' "${code}" | grep -Eq '(curl|dnf5)[^#]*GROK_BOT_CHANNEL_URL'; then
+  fail "the resolved channel URL must be compared, never downloaded or installed"
 fi
 
 # Nothing here asserts the absence of other vendors' literals: scripts.yml is

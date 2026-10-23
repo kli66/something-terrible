@@ -1,6 +1,6 @@
 ---
 persistence: frozen
-self_hash: 88c64765800b78b4
+self_hash: 50b7e897418a1f6d
 ---
 # Layer optimization
 
@@ -45,7 +45,10 @@ checksum and serves an unsigned RPM (`rpm -Kv` reports digests only), so its pin
 sha256 computed once by the maintainer: that catches a truncated, corrupted, or retargeted download
 as a build failure, but it is not a vendor-published value and not a signature either. The vendor's
 signed yum repo is the stronger channel and a candidate migration once it stops lagging the download
-page.
+page. Because a pin would otherwise go stale without a word, the Grok Bot block also resolves the
+vendor's stable channel (`api2.cursor.sh/updates/download/stable/…` → `302`) and fails the build when
+the advertised artifact differs from the pinned file name. That keeps the reviewed pin and its sha256
+authoritative while making a stale pin loud; it is a tripwire, not an update mechanism.
 
 Size delta for the Proton Pass channel: 120,309,189 B downloaded / 390,913,189 B installed for the
 desktop RPM, plus 56,367,544 B for the `pass-cli` binary (which is also the download): roughly

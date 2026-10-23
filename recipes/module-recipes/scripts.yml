@@ -51,10 +51,17 @@ modules:
         # downloads.cursor.com (grokbot/stable/<build>/linux/x64/...). There is no
         # version manifest, no checksum file, and no directory listing, so the URL is
         # pinned like the GitHub-release blocks above.
-        # To update: open https://x.ai/bot, pick Linux (RPM) under "More downloads",
-        # copy the URL (the version appears in the file name), recompute
-        # sha256sum on the downloaded artifact, and refresh the pin, the hash, and this
-        # annotation together.
+        # To update: read the channel's current target with
+        #   curl -fsSI https://api2.cursor.sh/updates/download/stable/linux-x64/grok-bot-cc18e4e726507b90
+        # copy the URL from its Location header, recompute sha256sum on the downloaded
+        # artifact, and refresh the pin, the hash, and this annotation together.
+        # "Latest" is a routing endpoint, not a manifest: the download page's own JS calls
+        # api2.cursor.sh/updates/download/stable/<platform>/grok-bot-<product>, which 302s
+        # to the current build with the version only in the redirect. It is used here as a
+        # drift tripwire, never as an install source: the pin stays authoritative, and when
+        # the channel has moved past it the build fails so a human re-pins after review.
+        # Updates stay image-only either way; the app cannot self-update on an immutable
+        # /usr.
         # The download-page RPM is NOT GPG-signed (rpm -Kv: header/payload digests only),
         # so the pinned sha256 is the integrity anchor: it catches truncation, corruption,
         # and a retargeted URL. The vendor's yum repo
@@ -63,9 +70,22 @@ modules:
         GROK_BOT_URL="https://downloads.cursor.com/grokbot/stable/5acb0be5178da83005411731082da2dab1602ca7/linux/x64/grok-bot-0.75.3-1.x86_64.rpm"
         GROK_BOT_SHA256="171c38d01377b7da2c3772c2cb1ad0f7fc749c2df4d2253052de9a02e2cfe9a8"
         GROK_BOT_RPM="/tmp/grok-bot.rpm"
+        # Product id for the Linux x86_64 RPM on the vendor's stable channel, taken from
+        # x.ai/bot's own JS. It names a channel, not a version.
+        GROK_BOT_STABLE_URL="https://api2.cursor.sh/updates/download/stable/linux-x64/grok-bot-cc18e4e726507b90"
         case "${GROK_BOT_URL}" in
           https://downloads.cursor.com/*) ;;
           *) echo "unexpected Grok Bot RPM host: ${GROK_BOT_URL}" >&2; exit 1 ;;
+        esac
+        # Drift tripwire. Failing when the channel cannot be resolved is deliberate: a
+        # tripwire that skips itself is worse than a build that asks to be re-run.
+        GROK_BOT_CHANNEL_URL="$(curl -fsS -o /dev/null -w '%{redirect_url}' "${GROK_BOT_STABLE_URL}")" \
+          || { echo "Grok Bot stable channel did not resolve" >&2; exit 1; }
+        case "${GROK_BOT_CHANNEL_URL}" in
+          *"/${GROK_BOT_URL##*/}") ;;
+          *) echo "Grok Bot pin is stale: stable channel now serves ${GROK_BOT_CHANNEL_URL}" >&2
+             echo "Re-pin grok-bot after review: URL, sha256, and the version/date annotation." >&2
+             exit 1 ;;
         esac
         echo "Installing Grok Bot from: ${GROK_BOT_URL}"
         curl -fL "${GROK_BOT_URL}" -o "${GROK_BOT_RPM}"

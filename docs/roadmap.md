@@ -10,6 +10,7 @@ line per active change, not the source of truth.
 
 ## Tracks
 
+- `docs/changes/archive/2026-10-23-grok-bot-drift-tripwire/` — (landed) Fail the Grok Bot build when the stable channel outruns the pin.
 - `docs/changes/archive/2026-10-23-add-grok-bot/` — (landed) Grok Bot desktop agent from the pinned vendor RPM.
 - `docs/changes/add-skillshare-manager/` — (proposed) Skillshare as the image-managed skill service.
 - `docs/changes/archive/2026-10-22-add-proton-pass/` — (landed) Proton Pass desktop app and CLI from Proton's official channel.
@@ -25,5 +26,7 @@ flowchart TD
     add_grok_bot["add-grok-bot (landed)"]
     add_proton_pass["add-proton-pass (landed)"]
     add_skillshare_manager["add-skillshare-manager (proposed)"]
+    grok_bot_drift_tripwire["grok-bot-drift-tripwire (landed)"]
+    add_grok_bot --> grok_bot_drift_tripwire
 ```
 <!-- END GENERATED DAG -->

@@ -10,6 +10,7 @@ line per active change, not the source of truth.
 
 ## Tracks
 
+- `docs/changes/archive/2026-11-01-grok-bot-signed-channel/` — (landed) Grok Bot from the vendor's signed yum repo, keyed by a committed key hash.
 - `docs/changes/archive/2026-10-31-add-dux-files/` — (landed) Dux Files (`dfiles`) installed and resident; desktop defaults stay user-owned.
 - `docs/changes/archive/2026-10-23-grok-bot-drift-tripwire/` — (landed) Fail the Grok Bot build when the stable channel outruns the pin.
 - `docs/changes/archive/2026-10-23-add-grok-bot/` — (landed) Grok Bot desktop agent from the pinned vendor RPM.
@@ -29,6 +30,8 @@ flowchart TD
     add_proton_pass["add-proton-pass (landed)"]
     add_skillshare_manager["add-skillshare-manager (proposed)"]
     grok_bot_drift_tripwire["grok-bot-drift-tripwire (landed)"]
+    grok_bot_signed_channel["grok-bot-signed-channel (landed)"]
     add_grok_bot --> grok_bot_drift_tripwire
+    add_grok_bot --> grok_bot_signed_channel
 ```
 <!-- END GENERATED DAG -->

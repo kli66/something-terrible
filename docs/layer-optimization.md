@@ -1,6 +1,6 @@
 ---
 persistence: frozen
-self_hash: 50b7e897418a1f6d
+self_hash: ec7096e1c2eaede0
 ---
 # Layer optimization
 
@@ -31,24 +31,28 @@ Set `rechunk: true` in `.github/workflows/build.yml` (blue-build/github-action@v
 ### B. Pin vendored RPMs; vendor-latest is a named exception, not the default
 
 Replaced `curl … releases/latest` scraping with explicitly pinned release RPM URLs in `scripts.yml`
-(Bettbox, CC Switch, Chipmunk, Grok Bot). Accepted vendor-latest channels, in landing order: **Bitwarden**,
+(Bettbox, CC Switch, Chipmunk). Accepted vendor-latest channels, in landing order: **Bitwarden**,
 which installs from a vendor download redirect, then **Proton Pass**, which resolves both of its
 artifacts from Proton's own JSON channel manifests (`PassDesktop/linux/x64/version.json` for the
-desktop RPM, `pass-cli/versions.json` for the CLI) and verifies the hash that same manifest names.
+desktop RPM, `pass-cli/versions.json` for the CLI) and verifies the hash that same manifest names,
+and then **Grok Bot**, which installs from the vendor's OpenPGP-signed yum repo and lets dnf verify
+`repomd.xml` and each RPM against a signing key pinned by a committed sha256.
 The rationale is **churn, not verification strength**: the layer only changes when the vendor ships a
 release, so a vendor-latest channel costs no more churn than a pin. The integrity anchors differ, and
 the difference is deliberate rather than an oversight. Proton Pass verifies the hash that the same
 manifest names, which catches corruption, truncation, and a retargeted download but shares an origin
 with the artifact, so it is not a signature. Bitwarden's redirect carries no checksum at all, so TLS
-to `bitwarden.com` is its only anchor. Grok Bot's download page publishes neither a manifest nor a
-checksum and serves an unsigned RPM (`rpm -Kv` reports digests only), so its pin carries a committed
-sha256 computed once by the maintainer: that catches a truncated, corrupted, or retargeted download
-as a build failure, but it is not a vendor-published value and not a signature either. The vendor's
-signed yum repo is the stronger channel and a candidate migration once it stops lagging the download
-page. Because a pin would otherwise go stale without a word, the Grok Bot block also resolves the
-vendor's stable channel (`api2.cursor.sh/updates/download/stable/…` → `302`) and fails the build when
-the advertised artifact differs from the pinned file name. That keeps the reviewed pin and its sha256
-authoritative while making a stale pin loud; it is a tripwire, not an update mechanism.
+to `bitwarden.com` is its only anchor. Grok Bot used to be the weakest of the three: its download
+page publishes neither a manifest nor a checksum and serves an unsigned RPM (`rpm -Kv` reports digests
+only), so its pin carried a maintainer-computed sha256, which catches a truncated, corrupted, or
+retargeted download but is neither vendor-published nor a signature. That is no longer the channel.
+The vendor's signed yum repo now serves the same builds as the download page (0.78.1-1 on 2026-10-31
+with an identical payload digest, differing only by the signature header), so Grok Bot moved to it:
+the committed sha256 now pins the vendor's *signing key*, which dnf then uses to verify `repomd.xml`
+and every RPM. A rotated key fails the hash, a forged repo or artifact fails the signature check, and
+a repo that cannot be verified resolves to nothing and fails the block's shape guard. The earlier
+stable-channel tripwire (`api2.cursor.sh/updates/download/stable/…` → `302`) retired with the pin it
+guarded: there is no pinned artifact left to go stale.
 
 Size delta for the Proton Pass channel: 120,309,189 B downloaded / 390,913,189 B installed for the
 desktop RPM, plus 56,367,544 B for the `pass-cli` binary (which is also the download): roughly
@@ -63,9 +67,10 @@ The *current* pins and their dates are not inventoried here — they live in
 version/date annotation in sync when bumping). `tests/check-*.sh` grep-assert the pins
 (e.g. `tests/check-bettbox-install.sh`, `tests/check-agentsview-install.sh`).
 
-**To update:** browse the GitHub releases page (or, for Grok Bot, `https://x.ai/bot` → Linux RPM),
-copy the new RPM URL, recompute the sha256 where the block pins one, and update the comment with
-version/date.
+**To update:** browse the GitHub releases page, copy the new RPM URL, recompute the sha256 where the
+block pins one, and update the comment with version/date. Grok Bot needs nothing here — it resolves
+from its signed repo — unless the vendor rotates its signing key, in which case the key hash and
+fingerprint in that block, and its `Last validated` annotation, are refreshed together.
 For a vendor-latest block there is nothing to edit until its resolution is re-checked; refresh that
 block's `Last validated <date>` annotation when it is, and re-run its `tests/check-*.sh`.
 

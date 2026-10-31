@@ -46,62 +46,71 @@ modules:
         echo "Installing Chipmunk from: ${CHIPMUNK_URL}"
         dnf5 install -y "${CHIPMUNK_URL}"
 
-        # Install Grok Bot (pinned v0.75.3, 2026-10-23)
-        # x.ai/bot serves the Linux build from a build-specific URL under
-        # downloads.cursor.com (grokbot/stable/<build>/linux/x64/...). There is no
-        # version manifest, no checksum file, and no directory listing, so the URL is
-        # pinned like the GitHub-release blocks above.
-        # To update: read the channel's current target with
-        #   curl -fsSI https://api2.cursor.sh/updates/download/stable/linux-x64/grok-bot-cc18e4e726507b90
-        # copy the URL from its Location header, recompute sha256sum on the downloaded
-        # artifact, and refresh the pin, the hash, and this annotation together.
-        # "Latest" is a routing endpoint, not a manifest: the download page's own JS calls
-        # api2.cursor.sh/updates/download/stable/<platform>/grok-bot-<product>, which 302s
-        # to the current build with the version only in the redirect. It is used here as a
-        # drift tripwire, never as an install source: the pin stays authoritative, and when
-        # the channel has moved past it the build fails so a human re-pins after review.
-        # Updates stay image-only either way; the app cannot self-update on an immutable
-        # /usr.
-        # The download-page RPM is NOT GPG-signed (rpm -Kv: header/payload digests only),
-        # so the pinned sha256 is the integrity anchor: it catches truncation, corruption,
-        # and a retargeted URL. The vendor's yum repo
-        # (https://downloads.cursor.com/yumrepo/grok-bot) has signed builds but lags the
-        # download page (0.75.2 vs 0.75.3 on 2026-10-23), so it is not the source here.
-        GROK_BOT_URL="https://downloads.cursor.com/grokbot/stable/5acb0be5178da83005411731082da2dab1602ca7/linux/x64/grok-bot-0.75.3-1.x86_64.rpm"
-        GROK_BOT_SHA256="171c38d01377b7da2c3772c2cb1ad0f7fc749c2df4d2253052de9a02e2cfe9a8"
-        GROK_BOT_RPM="/tmp/grok-bot.rpm"
-        # Product id for the Linux x86_64 RPM on the vendor's stable channel, taken from
-        # x.ai/bot's own JS. It names a channel, not a version.
-        GROK_BOT_STABLE_URL="https://api2.cursor.sh/updates/download/stable/linux-x64/grok-bot-cc18e4e726507b90"
-        case "${GROK_BOT_URL}" in
-          https://downloads.cursor.com/*) ;;
-          *) echo "unexpected Grok Bot RPM host: ${GROK_BOT_URL}" >&2; exit 1 ;;
-        esac
-        # Drift tripwire. Failing when the channel cannot be resolved is deliberate: a
-        # tripwire that skips itself is worse than a build that asks to be re-run.
-        GROK_BOT_CHANNEL_URL="$(curl -fsS -o /dev/null -w '%{redirect_url}' "${GROK_BOT_STABLE_URL}")" \
-          || { echo "Grok Bot stable channel did not resolve" >&2; exit 1; }
-        case "${GROK_BOT_CHANNEL_URL}" in
-          *"/${GROK_BOT_URL##*/}") ;;
-          *) echo "Grok Bot pin is stale: stable channel now serves ${GROK_BOT_CHANNEL_URL}" >&2
-             echo "Re-pin grok-bot after review: URL, sha256, and the version/date annotation." >&2
+        # Install Grok Bot from the vendor's OpenPGP-signed yum repo.
+        # x.ai/bot's download page serves the same builds, but that RPM is unsigned
+        # (rpm -Kv reports header/payload digests only), so its sha256 was the only
+        # anchor available. The vendor's yum repo now leads: on 2026-10-31 its
+        # grok-bot-0.78.1-1 x86_64 RPM and the download page's carried an identical
+        # payload digest, differing only by the signature header the repo build adds.
+        # The anchor therefore moves from one artifact to the signing key: the key is
+        # fetched, verified against the committed sha256 below, and handed to dnf by
+        # file path, so repo_gpgcheck verifies repomd.xml and gpgcheck verifies every
+        # RPM against a key that lives in git rather than one that was merely served
+        # over TLS at build time. A rotated key fails the hash; a forged or stale repo
+        # or artifact fails the signature check; an unresolvable repo fails the shape
+        # guard. Each is a review prompt, not a silent pass.
+        # Version policy is vendor-latest on the signed channel: the layer caches and
+        # only re-resolves when it re-executes, so this costs no more churn than the
+        # old pin did. Updates stay image-only either way; the app cannot self-update
+        # on an immutable /usr.
+        # To re-pin the key, fetch it, read its fingerprint with
+        #   gpg --show-keys --with-colons anysphere.asc | awk -F: '/^fpr/{print $10; exit}'
+        # and refresh GROK_BOT_KEY_SHA256, GROK_BOT_KEY_FPR and this annotation together.
+        # Last validated 2026-10-31: grok-bot 0.78.1-1 (x86_64); key fingerprint
+        # 380FF4BCDC34A4BD92A3565342A1772E62E492D6, "Anysphere Inc <security@anysphere.co>".
+        GROK_BOT_KEY_URL="https://downloads.cursor.com/keys/anysphere.asc"
+        GROK_BOT_KEY_SHA256="9d2adcc95efdf65e6e76f964968734551ab70181634781f9d5952b271895ec03"
+        GROK_BOT_KEY_FPR="380ff4bcdc34a4bd92a3565342a1772e62e492d6"
+        GROK_BOT_KEY_FILE="/tmp/grok-bot-vendor.asc"
+        GROK_BOT_REPO_FILE="/etc/yum.repos.d/grok-bot-vendor.repo"
+        curl -fL "${GROK_BOT_KEY_URL}" -o "${GROK_BOT_KEY_FILE}"
+        test -s "${GROK_BOT_KEY_FILE}"
+        printf '%s  %s\n' "${GROK_BOT_KEY_SHA256}" "${GROK_BOT_KEY_FILE}" | sha256sum -c - \
+          || { echo "Grok Bot signing key sha256 mismatch" >&2; exit 1; }
+        cat > "${GROK_BOT_REPO_FILE}" <<GROK_BOT_REPO
+        [grok-bot-vendor]
+        name=Grok Bot (vendor, image build only)
+        baseurl=https://downloads.cursor.com/yumrepo/grok-bot
+        enabled=1
+        gpgcheck=1
+        repo_gpgcheck=1
+        gpgkey=file://${GROK_BOT_KEY_FILE}
+        GROK_BOT_REPO
+        # Resolve before installing, so the installed NVR is asserted against the version
+        # this build's repo actually offered instead of a second hardcoded literal.
+        # --assumeyes lets dnf import the key without a prompt; the query prints its
+        # repository banner on stdout, so the resolved version is the last line. A repo
+        # whose repomd.xml fails verification loads but yields no package, hence the
+        # shape guard: an empty or non-version result must fail here, loudly.
+        GROK_BOT_RESOLVED="$(dnf5 --assumeyes repoquery --repo grok-bot-vendor --available \
+          --latest-limit 1 --qf '%{version}-%{release}' grok-bot 2>/dev/null | tail -n1)"
+        case "${GROK_BOT_RESOLVED}" in
+          [0-9]*.[0-9]*-[0-9]*) ;;
+          *) echo "Grok Bot repo resolved no signed package: '${GROK_BOT_RESOLVED}'" >&2
              exit 1 ;;
         esac
-        echo "Installing Grok Bot from: ${GROK_BOT_URL}"
-        curl -fL "${GROK_BOT_URL}" -o "${GROK_BOT_RPM}"
-        test -s "${GROK_BOT_RPM}"
-        printf '%s  %s\n' "${GROK_BOT_SHA256}" "${GROK_BOT_RPM}" | sha256sum -c - \
-          || { echo "Grok Bot RPM sha256 mismatch" >&2; exit 1; }
-        # A renamed or retargeted artifact must fail here, not install something else.
-        # The version literal is a second, independent check that the file the URL names
-        # is the file the RPM header claims to be.
-        test "$(rpm -qp --qf '%{NAME}' "${GROK_BOT_RPM}")" = "grok-bot"
-        test "$(rpm -qp --qf '%{ARCH}' "${GROK_BOT_RPM}")" = "x86_64"
-        test "$(rpm -qp --qf '%{VERSION}-%{RELEASE}' "${GROK_BOT_RPM}")" = "0.75.3-1"
-        dnf5 install -y "${GROK_BOT_RPM}"
-        rm -f "${GROK_BOT_RPM}"
-        # The %post registers /etc/yum.repos.d/grok-bot.repo (gpgcheck + repo_gpgcheck,
-        # key from downloads.cursor.com) even for a local-file install. /usr is immutable
+        echo "Installing Grok Bot from the vendor repo: ${GROK_BOT_RESOLVED}"
+        dnf5 install -y grok-bot
+        test "$(rpm -q --qf '%{VERSION}-%{RELEASE}' grok-bot)" = "${GROK_BOT_RESOLVED}" \
+          || { echo "installed grok-bot is not the version the repo resolved" >&2; exit 1; }
+        test "$(rpm -q --qf '%{ARCH}' grok-bot)" = "x86_64"
+        # The import is only trusted because the key hash above matched; assert the key
+        # that actually landed in the rpmdb is that one.
+        rpm -q gpg-pubkey | grep -qF "${GROK_BOT_KEY_FPR}" \
+          || { echo "unexpected Grok Bot signing key in the rpmdb" >&2; exit 1; }
+        rm -f "${GROK_BOT_KEY_FILE}" "${GROK_BOT_REPO_FILE}"
+        # The %post registers its own /etc/yum.repos.d/grok-bot.repo (same baseurl, key
+        # from downloads.cursor.com, skip_if_unavailable=1, enabled=1). /usr is immutable
         # here, so that repo cannot serve an in-place update; disable it the way the terra
         # repo is disabled, and note the vendor scriptlet preserves an existing enabled=0
         # on later upgrades.

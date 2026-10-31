@@ -61,6 +61,16 @@ modules:
         - quickshell-git
         - danksearch
         - dankcalendar-git
+        # Dux Files (dfiles), the Dux Shell file manager, from the same
+        # avengemedia/danklinux repo. Its sibling dux-files-git declares Conflicts
+        # (both Provide dfiles), so only one may ever be installed; this takes the
+        # stable, tag-tracked package because a -git build would churn the dnf layer
+        # on every upstream push and nothing here needs master-only code.
+        # Requires (quickshell-git or quickshell) — satisfied above — and pulls gvfs
+        # in as a weak dep, which is what makes trash:// and network shares work.
+        # No desktop default is baked: the directory handler and the portal backend
+        # stay user-owned (see the conventions in AGENTS.md).
+        - dux-files
         # Btrfs snapshots of /var/home. Config + first-boot subvolume init are
         # shipped via files.yml; timers enabled in systemd.yml.
         # (btrfs-assistant is the GUI front-end.)

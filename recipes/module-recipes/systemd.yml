@@ -30,6 +30,15 @@ user:
     # `spawn "dms" "run"` — that would launch DMS twice. Niri startup/keybinds live in the
     # user dotfile ~/.config/niri/config.kdl (not baked into this image).
     - dms.service
+    # Dux Files file manager, resident for the session. The daemon is optional
+    # upstream (opening a folder starts it), but a running instance opens windows
+    # without a cold start, answers the portal file chooser immediately, and holds
+    # org.freedesktop.FileManager1 — which is also what keeps dolphin's activation
+    # file for that same name from winning the call. The unit ships with
+    # --keep-running, so closing the last window hides the daemon instead of quitting.
+    # It is deliberately NOT made anyone's default file manager here: the mime
+    # handler and the portal backend are per-user choices (AGENTS.md conventions).
+    - dfiles.service
     # Host-native AgentsView can invoke the authenticated Linuxbrew Claude and Codex
     # CLIs for Insights. Its unit is bound to Kai's graphical session and keeps all
     # configuration, authentication, session, and database state in the user home.

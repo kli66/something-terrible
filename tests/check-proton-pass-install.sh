@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-script="recipes/module-recipes/scripts.yml"
+script="recipes/module-recipes/proton-pass.yml"
 recipe="recipes/recipe.yml"
 
 fail() {
@@ -9,7 +9,9 @@ fail() {
   exit 1
 }
 
-# Comment-stripped, executable lines only. The block's comments explain what it
+[[ -f "${script}" ]] || fail "missing ${script}"
+
+# Comment-stripped, executable lines only. The module's comments explain what it
 # deliberately does NOT do (no setuid bit, no --no-sandbox, no vendor install.sh),
 # so the negative assertions below must be checked against code, not comment prose.
 code="$(awk '{ sub(/^[[:space:]]+/, ""); if ($0 == "" || $0 ~ /^#/) next; print }' "${script}")"
@@ -67,26 +69,17 @@ has_code '"7f454c46"'
 has_code 'Proton Pass RPM sha512 mismatch'
 has_code 'pass-cli sha256 mismatch'
 
-# --- positive: one snippet, one cleanup, unchanged module order ---------------
+# --- positive: one snippet, one cleanup, module order ------------------------
 test "$(grep -c 'dnf5 clean all' "${script}")" -eq 1 || fail "dnf5 clean all must occur exactly once"
 # Checked against the comment-stripped stream so that a commented-out
-# "# dnf5 clean all" tail cannot satisfy it, and so the assertion does not pin
-# the YAML block-scalar indentation.
+# "# dnf5 clean all" tail cannot satisfy it.
 code_last="$(printf '%s\n' "${code}" | awk 'NF { last = $0 } END { print last }')"
-[[ "${code_last}" == "dnf5 clean all" ]] || fail "dnf5 clean all must be the last executable line of the snippet"
+[[ "${code_last}" == "dnf5 clean all" ]] || fail "dnf5 clean all must be the last executable line of the module"
 
-scripts_line="$(awk '/module-recipes\/scripts.yml/ { print NR }' "${recipe}")"
+proton_line="$(awk '/module-recipes\/proton-pass.yml/ { print NR }' "${recipe}")"
 systemd_line="$(awk '/module-recipes\/systemd.yml/ { print NR }' "${recipe}")"
-test "${scripts_line}" -lt "${systemd_line}"
-
-# --- positive: the earlier vendored blocks are untouched ----------------------
-# These headers are comments, so they are file-scoped by nature.
-grep -Fq "# Install Bettbox (pinned" "${script}"
-grep -Fq "# Install CC Switch (pinned" "${script}"
-grep -Fq "# Install Chipmunk (pinned" "${script}"
-grep -Fq "# Install Bitwarden Desktop (vendor redirects" "${script}"
-has_code 'terra-bootstrap'
-has_code "sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/terra*.repo"
+test -n "${proton_line}" && test -n "${systemd_line}" || fail "missing recipe module entry"
+test "${proton_line}" -lt "${systemd_line}" || fail "proton-pass.yml must precede systemd.yml"
 
 # --- negative: official Proton channel only ----------------------------------
 if printf '%s\n' "${code}" | grep -Eqi '(flatpak|snap)[[:space:]]+(install|add|run)'; then
@@ -106,7 +99,7 @@ while IFS= read -r line; do
   [[ "${line}" == "test ! -e /usr/local/bin/pass-cli" ]] || fail "pass-cli must be installed to /usr/bin, not /usr/local/bin: ${line}"
 done <<< "${code}"
 
-# Path-scoped on purpose: the Bettbox block legitimately sets its own u+s bit,
+# Path-scoped on purpose: the Bettbox module legitimately sets its own u+s bit,
 # so a bare setuid grep would fail today.
 if printf '%s\n' "${code}" | grep -Eq 'chmod[^#]*/usr/lib/proton-pass/chrome-sandbox'; then
   fail "chrome-sandbox must keep the shipped 0755 mode, without a setuid bit"
@@ -115,7 +108,7 @@ if printf '%s\n' "${code}" | grep -Fq -- '--no-sandbox'; then
   fail "no --no-sandbox flag may be added anywhere"
 fi
 
-# No vendor URL in this block may sit off-host: a literal manifest URL has to be
+# No vendor URL in this module may sit off-host: a literal manifest URL has to be
 # proton.me, and a URL computed from the manifest is host-guarded by the case
 # assertions above.
 while IFS= read -r line; do
@@ -127,11 +120,10 @@ while IFS= read -r line; do
 done <<< "${code}"
 
 # Design constraint 11: every asserted version is manifest-derived. The pinned
-# Bettbox / CC Switch / Chipmunk URL constants legitimately carry version
-# literals (1.19.4, 4.0.9, 4.4.0), so this negative is scoped to the Proton Pass
-# block instead of the whole file.
+# Bettbox / CC Switch / Chipmunk modules legitimately carry version literals, so
+# this negative is scoped to the Proton Pass block instead of the whole module.
 pass_block="$(awk '/^PASS_GUI_MANIFEST_URL=/ { inblock = 1 } inblock && /^dnf5 clean all$/ { inblock = 0 } inblock { print }' <<< "${code}")"
-test -n "${pass_block}" || fail "could not locate the Proton Pass block in scripts.yml"
+test -n "${pass_block}" || fail "could not locate the Proton Pass block in ${script}"
 if grep -Eq '[0-9]+\.[0-9]+\.[0-9]+' <<< "${pass_block}"; then
   fail "Proton Pass assertions must use the manifest-derived version, not a hardcoded literal"
 fi
@@ -146,8 +138,5 @@ fi
 if find files/system -iname '*proton*' -print -quit | grep -q .; then
   fail "no Proton Pass config, session, or native-messaging host may be baked under files/system"
 fi
-
-# Nothing here asserts the absence of other vendors' literals: scripts.yml is shared, and a
-# whole-file negative would break the moment any sibling install block lands.
 
 echo "check-proton-pass-install: OK"

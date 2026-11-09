@@ -2,7 +2,7 @@
 set -euo pipefail
 
 dnf_recipe="recipes/module-recipes/dnf.yml"
-script="recipes/module-recipes/scripts.yml"
+terra_recipe="recipes/module-recipes/terra.yml"
 greetd="files/system/etc/greetd/config.toml"
 systemd_recipe="recipes/module-recipes/systemd.yml"
 
@@ -21,21 +21,27 @@ for pkg in dms dms-greeter quickshell-git danksearch dankcalendar-git; do
 done
 
 # --- noctalia must be gone: the shell is DMS now, and noctalia-qs conflicts with
-#     upstream quickshell (both Provide quickshell). ---
-if grep -v '^[[:space:]]*#' "${script}" | grep -Fq "noctalia-shell"; then
-  echo "noctalia-shell should no longer be installed in scripts.yml (a commented note is fine)" >&2
-  exit 1
-fi
+#     upstream quickshell (both Provide quickshell). Scan every module so it
+#     cannot reappear in a per-vendor script module either; a commented note is fine. ---
+for f in recipes/module-recipes/*.yml; do
+  if grep -v '^[[:space:]]*#' "$f" | grep -Fq "noctalia-shell"; then
+    echo "noctalia-shell should no longer be installed in any module (${f}; a commented note is fine)" >&2
+    exit 1
+  fi
+done
 if grep -Eq "^[[:space:]]*-[[:space:]]+noctalia" "${dnf_recipe}"; then
   echo "noctalia packages should not be in dnf.yml" >&2
   exit 1
 fi
 
 # --- terra block now installs ONLY nwg-look + zed (adw-gtk3-theme moved to Fedora/dnf.yml) ---
-grep -Fq "dnf5 install -y nwg-look zed" "${script}"
+grep -Fq "dnf5 install -y nwg-look zed" "${terra_recipe}"
+grep -Fq "terra-bootstrap" "${terra_recipe}"
+grep -Fq "sed -i 's/^enabled=0/enabled=1/' /etc/yum.repos.d/terra*.repo" "${terra_recipe}"
+grep -Fq "sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/terra*.repo" "${terra_recipe}"
 grep -Eq "^[[:space:]]*-[[:space:]]+adw-gtk3-theme\$" "${dnf_recipe}"
-if grep -v '^[[:space:]]*#' "${script}" | grep -Fq "adw-gtk3-theme"; then
-  echo "adw-gtk3-theme should be in dnf.yml (Fedora), not the terra block in scripts.yml (a commented note is fine)" >&2
+if grep -v '^[[:space:]]*#' "${terra_recipe}" | grep -Fq "adw-gtk3-theme"; then
+  echo "adw-gtk3-theme should be in dnf.yml (Fedora), not the terra module (a commented note is fine)" >&2
   exit 1
 fi
 
@@ -54,11 +60,15 @@ if grep -v '^[[:space:]]*#' "${greetd}" | grep -Fq "tuigreet"; then
   exit 1
 fi
 
-# --- dnf.yml runs before scripts.yml so upstream quickshell is installed before the
+# --- dnf.yml runs before terra.yml so upstream quickshell is installed before the
 #     terra block runs (prevents any terra-quickshell/noctalia-qs from winning) ---
 recipe="recipes/recipe.yml"
 dnf_line="$(awk '/module-recipes\/dnf.yml/ { print NR }' "${recipe}")"
-scripts_line="$(awk '/module-recipes\/scripts.yml/ { print NR }' "${recipe}")"
-test "${dnf_line}" -lt "${scripts_line}"
+terra_line="$(awk '/module-recipes\/terra.yml/ { print NR }' "${recipe}")"
+test -n "${dnf_line}" && test -n "${terra_line}" || {
+  echo "missing dnf.yml or terra.yml in recipe.yml" >&2
+  exit 1
+}
+test "${dnf_line}" -lt "${terra_line}"
 
 echo "check-dms-install: OK"

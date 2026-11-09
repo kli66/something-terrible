@@ -1,0 +1,19 @@
+modules:
+  - type: script
+    snippets:
+      - |
+        set -oue pipefail
+
+        # Install Bitwarden Desktop (vendor redirects to latest; pin optional)
+        # Bitwarden's download endpoint redirects to the current stable RPM.
+        # Layer only changes when Bitwarden ships a new release.
+        # Last validated 2026-11-09: redirects to Bitwarden-2026.10.4-x86_64.rpm.
+        BITWARDEN_URL="https://bitwarden.com/download/?app=desktop&platform=linux&variant=rpm"
+        BITWARDEN_RPM="/tmp/bitwarden-desktop.rpm"
+        echo "Installing Bitwarden Desktop from: ${BITWARDEN_URL}"
+        curl -fL "${BITWARDEN_URL}" -o "${BITWARDEN_RPM}"
+        test -s "${BITWARDEN_RPM}"
+        dnf5 install -y "${BITWARDEN_RPM}"
+        rm -f "${BITWARDEN_RPM}"
+
+        dnf5 clean all

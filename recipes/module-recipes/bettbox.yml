@@ -1,0 +1,14 @@
+modules:
+  - type: script
+    snippets:
+      - |
+        set -oue pipefail
+
+        # Install Bettbox (pinned v1.19.4, 2026-10-01)
+        # To update: browse https://github.com/appshubcc/Bettbox/releases, copy new RPM URL
+        BETTBOX_URL="https://github.com/appshubcc/Bettbox/releases/download/v1.19.4/Bettbox-1.19.4-linux-amd64.rpm"
+        echo "Installing Bettbox from: ${BETTBOX_URL}"
+        dnf5 install -y "${BETTBOX_URL}"
+        chmod u+s /usr/share/Bettbox/BettboxCore
+
+        dnf5 clean all

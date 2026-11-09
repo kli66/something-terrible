@@ -14,6 +14,7 @@ line per active change, not the source of truth.
 - `docs/changes/archive/2026-10-31-add-dux-files/` — (landed) Dux Files (`dfiles`) installed and resident; desktop defaults stay user-owned.
 - `docs/changes/archive/2026-10-23-grok-bot-drift-tripwire/` — (landed) Fail the Grok Bot build when the stable channel outruns the pin.
 - `docs/changes/archive/2026-10-23-add-grok-bot/` — (landed) Grok Bot desktop agent from the pinned vendor RPM.
+- `docs/changes/archive/2026-11-09-split-scripts-module/` — (landed) One script module per vendored app instead of one shared `scripts.yml`.
 - `docs/changes/add-skillshare-manager/` — (proposed) Skillshare as the image-managed skill service.
 - `docs/changes/archive/2026-10-22-add-proton-pass/` — (landed) Proton Pass desktop app and CLI from Proton's official channel.
 
@@ -31,6 +32,7 @@ flowchart TD
     add_skillshare_manager["add-skillshare-manager (proposed)"]
     grok_bot_drift_tripwire["grok-bot-drift-tripwire (landed)"]
     grok_bot_signed_channel["grok-bot-signed-channel (landed)"]
+    split_scripts_module["split-scripts-module (landed)"]
     add_grok_bot --> grok_bot_drift_tripwire
     add_grok_bot --> grok_bot_signed_channel
 ```

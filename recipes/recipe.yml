@@ -10,9 +10,15 @@ modules:
   - from-file: module-recipes/files.yml
   - from-file: module-recipes/fonts.yml
   - from-file: module-recipes/dnf.yml
+  - from-file: module-recipes/terra.yml
   - from-file: module-recipes/brew.yml
   - from-file: module-recipes/kargs.yml
-  - from-file: module-recipes/scripts.yml
+  - from-file: module-recipes/bettbox.yml
+  - from-file: module-recipes/bitwarden.yml
+  - from-file: module-recipes/cc-switch.yml
+  - from-file: module-recipes/chipmunk.yml
+  - from-file: module-recipes/grok-bot.yml
+  - from-file: module-recipes/proton-pass.yml
   - from-file: module-recipes/agentsview.yml
   - from-file: module-recipes/systemd.yml
   - type: signing

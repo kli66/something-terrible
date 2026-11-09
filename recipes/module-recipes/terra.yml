@@ -1,0 +1,19 @@
+modules:
+  - type: script
+    snippets:
+      - |
+        set -oue pipefail
+
+        # Enable terra repo and install packages
+        # Only nwg-look and zed still need terra (neither is in Fedora or the DMS COPRs).
+        # adw-gtk3-theme moved to dnf.yml (it's in Fedora 44 proper).
+        # noctalia-shell was dropped here — the shell is now DankMaterialShell (DMS),
+        # installed via dnf.yml (dms COPR + danklinux coprdep) on the quickshell-git build.
+        # Do NOT reintroduce noctalia-shell: it hard-requires noctalia-qs, whose bundled
+        # quickshell fork also Provides+Conflicts quickshell and would break the DMS install.
+        dnf5 install -y --nogpgcheck --repofrompath 'terra-bootstrap,https://repos.fyralabs.com/terra$releasever' --repo terra-bootstrap terra-release
+        sed -i 's/^enabled=0/enabled=1/' /etc/yum.repos.d/terra*.repo
+        dnf5 install -y nwg-look zed
+        sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/terra*.repo
+
+        dnf5 clean all

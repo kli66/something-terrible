@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-script="recipes/module-recipes/scripts.yml"
+script="recipes/module-recipes/bettbox.yml"
 systemd_recipe="recipes/module-recipes/systemd.yml"
 recipe="recipes/recipe.yml"
+
+[[ -f "${script}" ]] || { echo "check-bettbox-install: missing ${script}" >&2; exit 1; }
 
 grep -Fq "# Install Bettbox (pinned" "${script}"
 grep -Fq "https://github.com/appshubcc/Bettbox/releases/download/" "${script}"
@@ -22,6 +24,7 @@ if grep -Fq "clash-verge" "${script}"; then
   exit 1
 fi
 
-scripts_line="$(awk '/module-recipes\/scripts.yml/ { print NR }' "${recipe}")"
+bettbox_line="$(awk '/module-recipes\/bettbox.yml/ { print NR }' "${recipe}")"
 systemd_line="$(awk '/module-recipes\/systemd.yml/ { print NR }' "${recipe}")"
-test "${scripts_line}" -lt "${systemd_line}"
+test -n "${bettbox_line}" && test -n "${systemd_line}"
+test "${bettbox_line}" -lt "${systemd_line}"

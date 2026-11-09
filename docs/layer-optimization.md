@@ -1,6 +1,6 @@
 ---
 persistence: frozen
-self_hash: ec7096e1c2eaede0
+self_hash: b3ba02ef56b5eb41
 ---
 # Layer optimization
 
@@ -86,3 +86,15 @@ After the next build with these changes:
 3. Compare layer digests between the two builds — expect < 10 changed layers and < 100 MB re-pull for the trivial change.
 
 The honest test: `rpm-ostree upgrade` from a machine on the prior build → the pull size tells you how much churn you've actually eliminated.
+
+## Update 2026-11-09 — per-vendor script modules
+
+`scripts.yml` was split into one `script` module per vendored app (`bettbox.yml`, `bitwarden.yml`,
+`cc-switch.yml`, `chipmunk.yml`, `grok-bot.yml`, `proton-pass.yml`, plus `terra.yml` for the repo
+block), so the two `scripts.yml` paths in section B describe the module as it was when this analysis
+was written. The rationale is unchanged, and the cache argument gets stronger: a `script` module's
+snippets share one layer, so one pin bump used to invalidate every vendor artifact (Proton Pass
+alone is ~177 MB downloaded / ~447 MB installed per re-execution). Per-vendor modules invalidate
+only the bumped vendor's layer; the cost is six additional derived layers, which rechunk's stable
+layer plan and the ~109-derived-layer baseline absorb. The pins and their `Last validated`
+annotations now live in each app's module; `tests/check-<app>-install.sh` asserts each.

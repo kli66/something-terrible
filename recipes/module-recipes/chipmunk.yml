@@ -1,0 +1,13 @@
+modules:
+  - type: script
+    snippets:
+      - |
+        set -oue pipefail
+
+        # Install Chipmunk (pinned v4.4.0, 2026-09-30)
+        # To update: browse https://github.com/esrlabs/chipmunk/releases, copy new RPM URL
+        CHIPMUNK_URL="https://github.com/esrlabs/chipmunk/releases/download/4.4.0/chipmunk@4.4.0-linux-x86_64.rpm"
+        echo "Installing Chipmunk from: ${CHIPMUNK_URL}"
+        dnf5 install -y "${CHIPMUNK_URL}"
+
+        dnf5 clean all

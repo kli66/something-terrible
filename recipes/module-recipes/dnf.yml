@@ -55,7 +55,7 @@ modules:
         # developed against quickshell's git tree, so we track the -git build; pinning
         # plain quickshell would put us on a frozen release that lags what DMS expects.
         # Still NOT noctalia's noctalia-qs fork — noctalia-shell stays out of
-        # scripts.yml so nothing pulls noctalia-qs (which also Provides quickshell).
+        # every vendored module so nothing pulls noctalia-qs (which also Provides quickshell).
         - dms
         - dms-greeter
         - quickshell-git

@@ -1,25 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-script="recipes/module-recipes/scripts.yml"
+script="recipes/module-recipes/grok-bot.yml"
+recipe="recipes/recipe.yml"
 
 fail() {
   echo "check-grok-bot-install: $*" >&2
   exit 1
 }
 
-# Comment-stripped, executable lines only: the block's comments name the retired
+[[ -f "${script}" ]] || fail "missing ${script}"
+
+# Comment-stripped, executable lines only: the module's comments name the retired
 # download page, the old pin, and the sandbox trade-off, so the negative assertions
 # below must be checked against code, not prose.
 code="$(awk '{ sub(/^[[:space:]]+/, ""); if ($0 == "" || $0 ~ /^#/) next; print }' "${script}")"
 
 has_code() { grep -Fq -- "$1" <<< "${code}"; }
-
-# The Grok Bot block only. scripts.yml is shared, and a neighbouring block does use
-# --nogpgcheck (the terra bootstrap), so the retired-mechanism negatives must be scoped
-# to this block rather than the whole snippet.
-block="$(sed -n "/^ *# Install Grok Bot from the vendor/,/^ *# Install Proton Pass Desktop/p" "${script}")"
-grok_code="$(awk '{ sub(/^[[:space:]]+/, ""); if ($0 == "" || $0 ~ /^#/) next; print }' <<< "${block}")"
 
 # --- positive: signed vendor repo, pinned by key hash ------------------------
 grep -Fq "# Install Grok Bot from the vendor's OpenPGP-signed yum repo" "${script}"
@@ -56,7 +53,7 @@ has_code 'unexpected Grok Bot signing key in the rpmdb'
 
 # No second version literal: the assertion compares against what this build's repo
 # offered, so a bump needs no edit here.
-if printf '%s\n' "${grok_code}" | grep -Eq 'grok-bot-0\.[0-9]+\.[0-9]+'; then
+if printf '%s\n' "${code}" | grep -Eq 'grok-bot-0\.[0-9]+\.[0-9]+'; then
   fail "a pinned grok-bot version literal must not come back; the repo is the source"
 fi
 
@@ -77,24 +74,24 @@ has_code 'test -f /usr/share/applications/grok-bot.desktop'
 # --- negative: the retired pin and its drift tripwire stay retired ----------
 # The unsigned download-page RPM and the stable-channel probe were replaced by the
 # signed repo. Re-adding either would silently undo the signature anchor.
-if printf '%s\n' "${grok_code}" | grep -Fq 'grokbot/stable'; then
+if printf '%s\n' "${code}" | grep -Fq 'grokbot/stable'; then
   fail "the build must not fetch the unsigned download-page artifact"
 fi
-if printf '%s\n' "${grok_code}" | grep -Fq 'api2.cursor.sh'; then
+if printf '%s\n' "${code}" | grep -Fq 'api2.cursor.sh'; then
   fail "the stable-channel drift tripwire is retired; the repo is the source now"
 fi
-if printf '%s\n' "${grok_code}" | grep -Fq 'GROK_BOT_URL'; then
+if printf '%s\n' "${code}" | grep -Fq 'GROK_BOT_URL'; then
   fail "there is no pinned artifact URL any more"
 fi
-if printf '%s\n' "${grok_code}" | grep -Fq 'GROK_BOT_RPM'; then
+if printf '%s\n' "${code}" | grep -Fq 'GROK_BOT_RPM'; then
   fail "the local-file install path is retired; grok-bot comes from the repo"
 fi
 
 # --- negative: signature checking may never be bypassed ---------------------
-if printf '%s\n' "${grok_code}" | grep -Fq -- '--nogpgcheck'; then
+if printf '%s\n' "${code}" | grep -Fq -- '--nogpgcheck'; then
   fail "Grok Bot must be signature-verified, never installed with --nogpgcheck"
 fi
-if printf '%s\n' "${grok_code}" | grep -Eq '^repo?_?gpgcheck=0'; then
+if printf '%s\n' "${code}" | grep -Eq '^repo?_?gpgcheck=0'; then
   fail "gpgcheck/repo_gpgcheck must stay enabled for the vendor repo"
 fi
 
@@ -109,19 +106,14 @@ if printf '%s\n' "${code}" | grep -Eqi '(flatpak|snap)[[:space:]]+(install|add|r
   fail "Grok Bot must come from the vendor repo, not flatpak/snap"
 fi
 
-# --- positive: placement and the single shared cleanup ----------------------
+# --- positive: placement and cleanup in this vendor's own module ------------
 test "$(grep -c 'dnf5 clean all' "${script}")" -eq 1 || fail "dnf5 clean all must occur exactly once"
 code_last="$(printf '%s\n' "${code}" | awk 'NF { last = $0 } END { print last }')"
-[[ "${code_last}" == "dnf5 clean all" ]] || fail "dnf5 clean all must be the last executable line of the snippet"
+[[ "${code_last}" == "dnf5 clean all" ]] || fail "dnf5 clean all must be the last executable line of the module"
 
-chip_line="$(grep -n '# Install Chipmunk (pinned' "${script}" | cut -d: -f1)"
-grok_line="$(grep -n "# Install Grok Bot from the vendor" "${script}" | cut -d: -f1)"
-pass_line="$(grep -n "# Install Proton Pass Desktop" "${script}" | cut -d: -f1)"
-test -n "${chip_line}" && test -n "${grok_line}" && test -n "${pass_line}"
-test "${chip_line}" -lt "${grok_line}" || fail "Grok Bot must follow the Chipmunk block"
-test "${grok_line}" -lt "${pass_line}" || fail "Grok Bot must precede the Proton Pass block"
-
-# Nothing here asserts the absence of other vendors' literals: scripts.yml is
-# shared, and a whole-file negative would break when a sibling block lands.
+grok_line="$(awk '/module-recipes\/grok-bot.yml/ { print NR }' "${recipe}")"
+systemd_line="$(awk '/module-recipes\/systemd.yml/ { print NR }' "${recipe}")"
+test -n "${grok_line}" && test -n "${systemd_line}" || fail "missing recipe module entry"
+test "${grok_line}" -lt "${systemd_line}" || fail "grok-bot.yml must precede systemd.yml"
 
 echo "check-grok-bot-install: OK"

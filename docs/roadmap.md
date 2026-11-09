@@ -16,6 +16,7 @@ line per active change, not the source of truth.
 - `docs/changes/archive/2026-10-23-add-grok-bot/` — (landed) Grok Bot desktop agent from the pinned vendor RPM.
 - `docs/changes/archive/2026-11-09-split-scripts-module/` — (landed) One script module per vendored app instead of one shared `scripts.yml`.
 - `docs/changes/add-skillshare-manager/` — (proposed) Skillshare as the image-managed skill service.
+- `docs/changes/archive/2026-11-09-add-cjk-font-defaults/` — (landed) Image-wide CJK font defaults for host and Flatpak.
 - `docs/changes/archive/2026-10-22-add-proton-pass/` — (landed) Proton Pass desktop app and CLI from Proton's official channel.
 
 - **Image feature work** lands as `docs/changes/<name>/` folders; landed ones move to
@@ -26,6 +27,7 @@ line per active change, not the source of truth.
 <!-- BEGIN GENERATED DAG (regenerate: doc-contract update --repo-root .) -->
 ```mermaid
 flowchart TD
+    add_cjk_font_defaults["add-cjk-font-defaults (landed)"]
     add_dux_files["add-dux-files (landed)"]
     add_grok_bot["add-grok-bot (landed)"]
     add_proton_pass["add-proton-pass (landed)"]

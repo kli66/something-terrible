@@ -11,6 +11,9 @@ system:
     - snapper-timeline.timer
     - snapper-cleanup.timer
     - snapper-home-init.service
+    # Seeds /var/lib/flatpak/overrides/global once per machine. /var is not
+    # shipped from the image on rebase, so this cannot be a files/system copy.
+    - flatpak-cjk-fontconfig.service
   disabled:
     - plasmalogin.service
   masked:

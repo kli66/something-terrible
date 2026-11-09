@@ -32,6 +32,12 @@ modules:
         - fcitx5-qt
         - fcitx5-qt6
         - librime-lua
+        # Combined Noto CJK families used by the shared fontconfig defaults
+        # (/usr/share/fonts/cjk-defaults/cjk-default.conf). The Google Fonts
+        # entries in fonts.yml are per-language subsets, not these family names.
+        - google-noto-sans-cjk-vf-fonts
+        - google-noto-serif-cjk-vf-fonts
+        - google-noto-sans-mono-cjk-vf-fonts
         - wdisplays
         - ghostty
         - kitty

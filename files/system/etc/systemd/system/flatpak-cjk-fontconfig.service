@@ -1,0 +1,17 @@
+[Unit]
+Description=Seed the system-wide Flatpak CJK fontconfig override
+Documentation=man:flatpak-override(1)
+# /var is not replaced by image updates, so seed the system override once.
+# After the marker exists the override is user-owned and is not rewritten.
+ConditionPathExists=!/var/lib/flatpak/.something-terrible-cjk-fontconfig-seeded
+ConditionPathIsDirectory=/var/lib/flatpak
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/flatpak override --system --env=FONTCONFIG_FILE=/run/host/fonts/cjk-defaults/flatpak-fonts.conf
+ExecStart=/usr/bin/touch /var/lib/flatpak/.something-terrible-cjk-fontconfig-seeded
+
+[Install]
+WantedBy=multi-user.target

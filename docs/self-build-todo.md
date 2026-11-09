@@ -40,3 +40,31 @@ Quadlet unit at an image you control:
 skopeo inspect docker://docker.io/1467078763/metapi:latest   # read new digest + build date
 # then update the Image=...@sha256:... line and re-run tests/check-metapi-install.sh
 ```
+
+## Tern (terminal) — bake once its builds are public
+
+### Why
+
+Tern is installed per-user on the host, not by this image. It cannot be a recipe yet: the vendor's
+build service keeps the product private — `GET https://build.stencil.so/api/products` returns
+`{"id":"tern","public":false,"access":false,"latest":null}`, and
+`GET https://build.stencil.so/api/products/tern/builds` returns `{"error":"unauthenticated"}`
+without a Stencil beta account. A CI build has no such account, and baking a beta-gated artifact
+into a public image would redistribute it outside its channel.
+
+Version state on 2026-11-09: the host's Tern updater resolved latest to **0.9.13** (commit
+`8c6dfbd`, built 2026-11-08T17:27:41Z) while the installed build is **0.9.9** (commit `9c1c09f`);
+0.9.13 is downloaded and staged under `~/.cache/tern/updates/`, waiting for `tern restart`.
+
+### What to do
+
+1. When the product becomes public, add `recipes/module-recipes/tern.yml` (pinned URL + checksum,
+   `tests/check-tern-install.sh`) and an entry in `recipes/recipe.yml` before `systemd.yml`.
+2. Until then, Tern stays a per-user host install; do not add a module that calls the private API
+   or vendors the binary.
+
+### Trigger
+
+`https://build.stencil.so/api/products` reports the `tern` product with `"public": true` and a
+non-null `latest`, or the vendor publishes an installer/download that resolves without a Stencil
+account.

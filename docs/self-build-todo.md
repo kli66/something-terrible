@@ -53,8 +53,9 @@ without a Stencil beta account. A CI build has no such account, and baking a bet
 into a public image would redistribute it outside its channel.
 
 Version state on 2026-11-09: the host's Tern updater resolved latest to **0.9.13** (commit
-`8c6dfbd`, built 2026-11-08T17:27:41Z) while the installed build is **0.9.9** (commit `9c1c09f`);
-0.9.13 is downloaded and staged under `~/.cache/tern/updates/`, waiting for `tern restart`.
+`8c6dfbd`, built 2026-11-08T17:27:41Z) and installed it through Tern's own Restart to update; the
+previous build was **0.9.9** (commit `9c1c09f`). No update remains staged under
+`~/.cache/tern/updates/`.
 
 ### What to do
 

@@ -27,8 +27,9 @@ user:
     # dms.service ships with the dms package: WantedBy=graphical-session.target and
     # Requisite=graphical-session.target. niri (launched via niri-session /
     # /usr/share/wayland-sessions/niri.desktop) establishes that target, so DMS starts
-    # with the niri session and restarts on crash (Restart=on-failure). The Requisite
-    # guard keeps it from starting in the greeter's bare-niri session.
+    # with the niri session and restarts on crash (Restart=on-failure). The image
+    # drop-in restricts startup to XDG_CURRENT_DESKTOP=niri, excluding Plasma.
+    # The Requisite guard keeps it from starting in the greeter's bare-niri session.
     # IMPORTANT: because DMS is started by systemd here, the niri config must NOT also
     # `spawn "dms" "run"` — that would launch DMS twice. Niri startup/keybinds live in the
     # user dotfile ~/.config/niri/config.kdl (not baked into this image).

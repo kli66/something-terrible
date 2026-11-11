@@ -10,6 +10,7 @@ line per active change, not the source of truth.
 
 ## Tracks
 
+- Image DMS drop-in — (landed) Start DMS only when `XDG_CURRENT_DESKTOP=niri`; preserve Plasma sessions.
 - `docs/changes/archive/2026-11-01-grok-bot-signed-channel/` — (landed) Grok Bot from the vendor's signed yum repo, keyed by a committed key hash.
 - `docs/changes/archive/2026-10-31-add-dux-files/` — (landed) Dux Files (`dfiles`) installed and resident; desktop defaults stay user-owned.
 - `docs/changes/archive/2026-10-23-grok-bot-drift-tripwire/` — (landed) Fail the Grok Bot build when the stable channel outruns the pin.

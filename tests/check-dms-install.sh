@@ -5,6 +5,7 @@ dnf_recipe="recipes/module-recipes/dnf.yml"
 terra_recipe="recipes/module-recipes/terra.yml"
 greetd="files/system/etc/greetd/config.toml"
 systemd_recipe="recipes/module-recipes/systemd.yml"
+dms_dropin="files/system/usr/lib/systemd/user/dms.service.d/override.conf"
 
 # --- DankMaterialShell packages present in dnf.yml (from avengemedia/dms COPR +
 #     danklinux coprdep). `dms` ships QML assets and the dms.service unit; the CLI
@@ -51,6 +52,25 @@ awk '/^user:/{u=1} u&&/enabled:/{e=1} e&&/-[[:space:]]+dms\.service/{found=1} EN
   echo "dms.service must be under the systemd 'user: enabled:' scope" >&2
   exit 1
 }
+
+# Evaluate the image drop-in without starting a service or using the live manager.
+dms_test_dir="$(mktemp -d)"
+trap 'rm -rf "${dms_test_dir}"' EXIT
+mkdir "${dms_test_dir}/dms.service.d"
+printf '[Service]\nExecStart=/usr/bin/true\n' > "${dms_test_dir}/dms.service"
+cp "${dms_dropin}" "${dms_test_dir}/dms.service.d/override.conf"
+env SYSTEMD_UNIT_PATH="${dms_test_dir}" XDG_CURRENT_DESKTOP=niri \
+  systemd-analyze --user --unit=dms.service condition
+if env SYSTEMD_UNIT_PATH="${dms_test_dir}" XDG_CURRENT_DESKTOP=KDE \
+  systemd-analyze --user --unit=dms.service condition; then
+  echo "dms.service must not start in Plasma" >&2
+  exit 1
+fi
+if env -u XDG_CURRENT_DESKTOP SYSTEMD_UNIT_PATH="${dms_test_dir}" \
+  systemd-analyze --user --unit=dms.service condition; then
+  echo "dms.service must not start without a desktop identity" >&2
+  exit 1
+fi
 
 # --- greeter switched to dms-greeter running on niri, as the greeter user ---
 grep -Fq 'command = "dms-greeter --command niri"' "${greetd}"

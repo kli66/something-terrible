@@ -4,7 +4,12 @@ name: something-terrible
 description: This is my personal OS image.
 
 base-image: quay.io/fedora-ostree-desktops/kinoite
-image-version: 44
+# Pinned Fedora release tag, not the floating major: a rebuild uses this base until the tag is
+# bumped deliberately. To bump: pick the next 44.<YYYYMMDD>.<n> tag, read its digest with
+#   skopeo inspect --format '{{.Digest}}' docker://quay.io/fedora-ostree-desktops/kinoite:<tag>
+# update the tag and the digest below, then run tests/check-image-pin.sh.
+# Pinned 2026-11-13; digest sha256:47d27b4ae8ae85316a1b8a0f82312153b552cdb21a4fe2f71f9d85e04c8514cf.
+image-version: 44.20261112.0
 
 modules:
   - from-file: module-recipes/files.yml

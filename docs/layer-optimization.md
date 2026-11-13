@@ -1,6 +1,6 @@
 ---
 persistence: frozen
-self_hash: b3ba02ef56b5eb41
+self_hash: 635d742c9dc37518
 ---
 # Layer optimization
 
@@ -98,3 +98,14 @@ alone is ~177 MB downloaded / ~447 MB installed per re-execution). Per-vendor mo
 only the bumped vendor's layer; the cost is six additional derived layers, which rechunk's stable
 layer plan and the ~109-derived-layer baseline absorb. The pins and their `Last validated`
 annotations now live in each app's module; `tests/check-<app>-install.sh` asserts each.
+
+## Update 2026-11-13 — base release pinning
+
+Section C is historical: `image-version` now pins the base to one Fedora release tag
+(`44.20261112.0`, digest `sha256:47d27b4a…`) instead of the floating `44` major, and
+`tests/check-image-pin.sh` fails if it floats again. The pinned unit is the release tag, not the
+digest, so the reviewed version stays readable while the digest remains an audit annotation.
+
+The cost section C did not weigh is now explicit: **base updates arrive only at a deliberate bump**,
+not on every build. Bumping is the review point (read the Fedora 44 notes, update the tag and digest
+in `recipes/recipe.yml`, run the test); rechunk still bounds the bump's re-pull.

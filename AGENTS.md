@@ -138,7 +138,7 @@ A [BlueBuild](https://blue-build.org/) recipe that builds a personal, signed Fed
 
 - **Building is done by CI, not locally.** Every push (except `**.md`-only changes) triggers `.github/workflows/build.yml`, which delegates the entire build to the `blue-build/github-action`. Pushing is the build.
 - **Local image build** (only if BlueBuild CLI is installed): `bluebuild build ./recipes/recipe.yml`. Most edits are validated faster by reading the schema and running the tests below.
-- **Tests** are plain bash assertions that grep the recipe YAML — they verify *intent* (a package/snippet is present and ordered correctly), not a built image. Run the whole suite (13 files):
+- **Tests** are plain bash assertions that grep the recipe YAML — they verify *intent* (a package/snippet is present and ordered correctly), not a built image. Run the whole suite (14 files):
   ```bash
   for t in tests/check-*.sh; do bash "$t"; done
   ```
@@ -147,7 +147,7 @@ A [BlueBuild](https://blue-build.org/) recipe that builds a personal, signed Fed
 
 ## Architecture
 
-`recipes/recipe.yml` is the entrypoint. It sets `base-image`/`image-version` and pulls in ordered module files via `from-file`. **Module order matters** — modules run top-to-bottom during the build, and the tests enforce that the install modules run before `systemd.yml`. The `signing` module (cosign/Sigstore) is last.
+`recipes/recipe.yml` is the entrypoint. It sets `base-image`/`image-version` and pulls in ordered module files via `from-file`. `image-version` is a **pinned Fedora release tag** (`44.YYYYMMDD.N`), not the floating major, so a rebuild uses one reviewed base until the tag is bumped deliberately; `tests/check-image-pin.sh` guards the pin. **Module order matters** — modules run top-to-bottom during the build, and the tests enforce that the install modules run before `systemd.yml`. The `signing` module (cosign/Sigstore) is last.
 
 Each `recipes/module-recipes/*.yml` is one BlueBuild module:
 
